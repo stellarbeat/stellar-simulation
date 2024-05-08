@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"target": "ESNext",
+		"esModuleInterop": true,
+		"module": "commonjs",
+		"outDir": "lib",
+		"sourceMap": true,
+		"types": ["node"],
+		"strict": true
+	},
+	"include": ["src/**/*.ts", "decs.d.ts", "tests/**/*.ts"],
+	"exclude": ["node_modules"]
+}
