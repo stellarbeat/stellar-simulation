@@ -1,6 +1,5 @@
+import { PublicKey } from '.';
 import { QuorumSet } from './QuorumSet';
-
-type PublicKey = string;
 
 //todo: do we need the Node class?
 export class Node {
