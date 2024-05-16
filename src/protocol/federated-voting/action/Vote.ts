@@ -3,13 +3,13 @@ import { IEventBus } from '../../../IEventBus';
 import { NodeState } from '../NodeState';
 import { StatementValidator } from '../StatementValidator';
 
-export class Vote {
+export class Voter {
 	constructor(
 		private statementValidator: StatementValidator,
 		private eventBus: IEventBus
 	) {}
 
-	tryVote(nodeState: NodeState, statement: Statement): void {
+	tryVoteForStatement(nodeState: NodeState, statement: Statement): void{
 		if (!this.statementValidator.isValid(statement)) {
 			return;
 		}
@@ -18,6 +18,14 @@ export class Vote {
 		} else {
 			this.vote(nodeState, statement);
 		}
+	}
+
+	tryVoteForAcceptStatement(nodeState: NodeState, statement: Statement):void {
+
+	}
+
+	tryVote(nodeState: NodeState, statement: Statement): void {
+		
 	}
 
 	private canVote(nodeState: NodeState): boolean {
