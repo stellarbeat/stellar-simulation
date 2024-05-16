@@ -7,9 +7,16 @@
 * Scenario create and replay
 * Doesn't take quorum discovery into account for simplicity. All quorum slices for every node are known beforehand.
 * Single slot consensus for simplicity
-
+* Ignores security for simplicity (Message signing could be added in the future as it is an important part in why the algorithm works)
 
 Current status = braindump, needs to be improved
+
+# Install
+
+``` bash
+pnpm install
+```
+
 ## Federated voting
 Federated voting is a crucial part of the Stellar Consensus Protocol. 
 It allows a set of nodes in FBAS system to agree on values. 

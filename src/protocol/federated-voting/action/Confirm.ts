@@ -1,6 +1,6 @@
 import { NodeState } from '../NodeState';
-import { MessageFilter } from '../MessageFilter';
-import { IEventBus } from '../../../IEventBus';
+import { VoteFilter } from '../MessageFilter';
+import { IEventBus } from '../../../EventBus';
 import { QuorumService } from '../../../services/QuorumService';
 import { PublicKey, Statement } from '../../..';
 import { QuorumSet } from '../../../QuorumSet';
@@ -9,7 +9,7 @@ import { QuorumSet } from '../../../QuorumSet';
 export class Confirm {
 	constructor(
 		private eventBus: IEventBus,
-		private messageFilter: MessageFilter,
+		private messageFilter: VoteFilter,
 		private quorumService: QuorumService
 	) {}
 
@@ -34,7 +34,7 @@ export class Confirm {
 		statement: Statement,
 		quorumSets: Map<PublicKey, QuorumSet>
 	): boolean {
-		if (nodeState.state !== 'accepted') {
+		if (nodeState.phase !== 'accepted') {
 			return false;
 		}
 
@@ -52,8 +52,8 @@ export class Confirm {
 		quorumSets: Map<PublicKey, QuorumSet>
 	): boolean {
 		const quorumCandidate = this.messageFilter
-			.filter(nodeState.receivedMessages, statement, ['accept'])
-			.map((message) => message.publicKey);
+			.getCompatibleAcceptVotes(nodeState.peerVotes, statement)
+			.map((vote) => vote.node.publicKey);
 
 		return (
 			this.quorumService.isQuorum(quorumCandidate, quorumSets) &&
@@ -65,10 +65,7 @@ export class Confirm {
 	}
 
 	private confirm(nodeState: NodeState): void {
-		nodeState.state = 'confirmed';
-		this.eventBus.emit('confirmed', {
-			node: nodeState.node,
-			value: nodeState.statement
-		});
+		nodeState.phase = 'confirmed';
+		this.eventBus.emit(new NodeConfirmedEvent));
 	}
 }

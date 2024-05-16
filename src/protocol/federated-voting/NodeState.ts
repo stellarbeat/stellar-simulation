@@ -1,11 +1,11 @@
 import { Statement } from '../..';
-import { Message } from '../../Message';
 import { Node } from '../../Node';
+import { Vote } from './Vote';
 
 export class NodeState {
-	state: 'uncommitted' | 'voted' | 'accepted' | 'confirmed' = 'uncommitted';
-	statement: Statement | null = null;
-	receivedMessages: Set<Message> = new Set();
+	phase: 'unknown' | 'accepted' | 'confirmed' = 'unknown'; //where we are in this round of federated voting for this node
+	statement: Statement | null = null; //the statement we want to agree on
+	peerVotes: Set<Vote> = new Set(); //the votes it picked up from its peers
 
 	constructor(public readonly node: Node) {}
 }

@@ -1,48 +1,57 @@
-import { Confirm } from './action/Confirm';
 import { NodeState } from './NodeState';
 import { Node, PublicKey, Statement } from '../..';
 import { QuorumSet } from '../../QuorumSet';
-import { Accept } from './action/Accept';
-import { Vote } from './action/Vote';
-import { Message } from '../../Message';
 import { StatementValidator } from './StatementValidator';
+import { Vote } from './Vote';
+import { IEventBus as EventBus } from '../../EventBus';
+import { VoteEvent } from '../../VoteEvent';
+import { Accept } from './action/Accept';
+import { Confirm } from './action/Confirm';
 
 export class FederatedVoting {
 	private nodeStates: Map<PublicKey, NodeState> = new Map();
 
 	constructor(
-		private voteAction: Vote,
+		private statementValidator: StatementValidator,
+		private eventBus: EventBus,
 		private acceptAction: Accept,
-		private confirmAction: Confirm,
-		private statementValidator: StatementValidator
+		private confirmAction: Confirm
 	) {}
 
-	vote(node: Node, statement: Statement): void {
+	voteForStatement(node: Node, statement: Statement): void {
+		if (this.statementValidator.isValid(statement)) {
+			//todo: log
+			return;
+		}
+
 		const nodeState = this.getNodeState(node);
-		this.voteAction.tryVote(nodeState, statement);
-		//broadcast vote(statement)
+		nodeState.statement = statement;
+
+		const vote = new Vote(statement, false, node);
+		const event = new VoteEvent(node.publicKey, vote);
+
+		this.eventBus.emit(event); //todo rethink eventbus (move to higher level?)
 	}
 
-	processMessage(
-		node: Node,
-		message: Message,
+	processVote(
+		receiver: Node,
+		vote: Vote,
 		quorumSets: Map<PublicKey, QuorumSet>
 	): void {
-		const nodeState = this.getNodeState(node);
-		nodeState.receivedMessages.add(message);
+		const nodeState = this.getNodeState(receiver);
+		//TODO improve naming towards receiver
+		nodeState.peerVotes.add(vote);
 
-		const statement = message.statement;
-
-		if (!this.statementValidator.isValid(statement)) {
+		if (!this.statementValidator.isValid(vote.statement)) {
 			return; // todo: log
 		}
 
-		if (this.acceptAction.tryAccept(nodeState, statement, quorumSets)) {
+		if (this.acceptAction.tryAccept(nodeState, vote.statement, quorumSets)) {
 			//broadcast vote(accept statement)
 			return;
 		}
 
-		this.confirmAction.tryConfirm(nodeState, statement, quorumSets);
+		this.confirmAction.tryConfirm(nodeState, vote.statement, quorumSets);
 	}
 
 	private getNodeState(node: Node): NodeState {
