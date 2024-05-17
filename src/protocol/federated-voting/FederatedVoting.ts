@@ -1,66 +1,72 @@
-import { NodeState } from './NodeState';
-import { Node, PublicKey, Statement } from '../..';
-import { QuorumSet } from '../../QuorumSet';
+import { Statement } from '../..';
+import { EventBus } from '../../EventBus';
+import { VoteEvent } from '../../VoteEvent';
+import { Node as Node } from './Node';
 import { StatementValidator } from './StatementValidator';
 import { Vote } from './Vote';
-import { IEventBus as EventBus } from '../../EventBus';
-import { VoteEvent } from '../../VoteEvent';
-import { Accept } from './action/Accept';
-import { Confirm } from './action/Confirm';
+import { AcceptHandler } from './agreement-attempt-handler/AcceptHandler';
+import { ConfirmHandler } from './agreement-attempt-handler/ConfirmHandler';
 
+//an instannce of federated voting for a node
 export class FederatedVoting {
-	private nodeStates: Map<PublicKey, NodeState> = new Map();
-
 	constructor(
 		private statementValidator: StatementValidator,
 		private eventBus: EventBus,
-		private acceptAction: Accept,
-		private confirmAction: Confirm
+		private acceptHandler: AcceptHandler,
+		private confirmHandler: ConfirmHandler
 	) {}
 
-	voteForStatement(node: Node, statement: Statement): void {
-		if (this.statementValidator.isValid(statement)) {
-			//todo: log
+	//vote(statement)
+	vote(node: Node, statement: Statement): void {
+		if (this.statementValidator.isValid(statement, node)) {
+			//todo: should actually be node specific
 			return;
 		}
 
-		const nodeState = this.getNodeState(node);
-		nodeState.statement = statement;
-
-		const vote = new Vote(statement, false, node);
+		node.startNewAgreementAttempt(statement);
+		const vote = new Vote(statement, false, node.publicKey);
 		const event = new VoteEvent(node.publicKey, vote);
-
 		this.eventBus.emit(event); //todo rethink eventbus (move to higher level?)
 	}
 
-	processVote(
-		receiver: Node,
-		vote: Vote,
-		quorumSets: Map<PublicKey, QuorumSet>
-	): void {
-		const nodeState = this.getNodeState(receiver);
-		//TODO improve naming towards receiver
-		nodeState.peerVotes.add(vote);
+	//only the protocol can vote(accept(statement))
+	private voteToAccept(node: Node, statement: Statement) {
+		const acceptVote = new Vote(statement, true, node.publicKey);
+		const event = new VoteEvent(node.publicKey, acceptVote); //todo: message!
+		this.eventBus.emit(event);
+		return;
+	}
 
-		if (!this.statementValidator.isValid(vote.statement)) {
+	receiveVote(node: Node, vote: Vote): void {
+		if (vote.node === node.publicKey) return; //it's the node own vote, agreement cannot be advanced
+
+		if (!this.statementValidator.isValid(vote.statement, node)) {
+			//todo: should actually be node specific
 			return; // todo: log
 		}
 
-		if (this.acceptAction.tryAccept(nodeState, vote.statement, quorumSets)) {
-			//broadcast vote(accept statement)
+		const agreementAttempt = this.getOrStartAgreementAttempt(
+			node,
+			vote.statement
+		);
+		agreementAttempt.addPeerVote(vote);
+
+		if (this.acceptHandler.tryToMoveToAcceptPhase(node, agreementAttempt)) {
+			this.voteToAccept(node, vote.statement);
 			return;
 		}
 
-		this.confirmAction.tryConfirm(nodeState, vote.statement, quorumSets);
+		this.confirmHandler.tryToMoveToConfirmPhase(node, agreementAttempt);
+		//todo: emit event
 	}
 
-	private getNodeState(node: Node): NodeState {
-		let nodeState = this.nodeStates.get(node.publicKey);
-		if (!nodeState) {
-			nodeState = new NodeState(node);
-			this.nodeStates.set(node.publicKey, nodeState);
+	private getOrStartAgreementAttempt(node: Node, statement: Statement) {
+		let agreementAttempt = node.getAgreementAttemptFor(statement);
+
+		if (!agreementAttempt) {
+			agreementAttempt = node.startNewAgreementAttempt(statement);
 		}
 
-		return nodeState;
+		return agreementAttempt;
 	}
 }

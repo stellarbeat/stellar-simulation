@@ -1,4 +1,4 @@
-export { Node } from './Node';
+export { Node as Node } from './protocol/federated-voting/Node';
 export { Simulation } from './Simulation';
 
 export type PublicKey = string;

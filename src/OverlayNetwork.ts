@@ -1,7 +1,7 @@
 import assert from 'assert';
 import { FederatedVoting } from './protocol/FederatedVoting';
 import { Broadcaster } from './Broadcaster';
-import { Node } from './Node';
+import { Node } from './protocol/federated-voting/Node';
 
 type PublicKey = string;
 
