@@ -1,4 +1,5 @@
-import { PublicKey, Statement } from '../..';
+import { Statement } from './Statement';
+import { PublicKey } from '../../PublicKey';
 
 //contains the statement a node voted from and if it accepted a vote.
 export class Vote {

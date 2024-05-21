@@ -1,5 +1,5 @@
-export { Node as Node } from './protocol/federated-voting/Node';
+export { Node } from './protocol/federated-voting/Node';
 export { Simulation } from './Simulation';
+export { Statement } from './protocol/federated-voting/Statement';
 
 export type PublicKey = string;
-export type Statement = string;

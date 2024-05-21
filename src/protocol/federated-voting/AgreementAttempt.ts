@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { Statement } from '../..';
+import { Statement } from './Statement';
 import { Vote } from './Vote';
 
 /*

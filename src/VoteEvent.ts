@@ -1,4 +1,4 @@
-import { PublicKey } from '.';
+import { PublicKey } from './PublicKey';
 import { Event } from './Message';
 import { Vote } from './protocol/federated-voting/Vote';
 

@@ -1,7 +1,8 @@
 import assert from 'assert';
-import { PublicKey, Statement } from '../..';
+import { Statement } from './Statement';
 import { QuorumSet } from '../../QuorumSet';
 import { AgreementAttempt } from './AgreementAttempt';
+import { PublicKey } from '../..';
 
 export class Node {
 	public peerQuorumSets: Map<PublicKey, QuorumSet> = new Map();

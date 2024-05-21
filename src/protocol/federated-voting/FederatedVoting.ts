@@ -1,4 +1,5 @@
-import { Statement } from '../..';
+import { Statement } from './Statement';
+import { Event } from '../../Event';
 import { EventBus } from '../../EventBus';
 import { VoteEvent } from '../../VoteEvent';
 import { Node as Node } from './Node';
@@ -12,8 +13,8 @@ export class FederatedVoting {
 	constructor(
 		private statementValidator: StatementValidator,
 		private eventBus: EventBus,
-		private acceptHandler: AcceptHandler,
-		private confirmHandler: ConfirmHandler
+		private agreementAttemptAcceptHandler: AcceptHandler,
+		private agreementAttemptConfirmHandler: ConfirmHandler
 	) {}
 
 	//vote(statement)
@@ -41,7 +42,6 @@ export class FederatedVoting {
 		if (vote.node === node.publicKey) return; //it's the node own vote, agreement cannot be advanced
 
 		if (!this.statementValidator.isValid(vote.statement, node)) {
-			//todo: should actually be node specific
 			return; // todo: log
 		}
 
@@ -51,13 +51,25 @@ export class FederatedVoting {
 		);
 		agreementAttempt.addPeerVote(vote);
 
-		if (this.acceptHandler.tryToMoveToAcceptPhase(node, agreementAttempt)) {
+		if (
+			this.agreementAttemptAcceptHandler.tryToMoveToAcceptPhase(
+				node,
+				agreementAttempt
+			)
+		) {
 			this.voteToAccept(node, vote.statement);
 			return;
 		}
 
-		this.confirmHandler.tryToMoveToConfirmPhase(node, agreementAttempt);
-		//todo: emit event
+		if (
+			this.agreementAttemptConfirmHandler.tryToMoveToConfirmPhase(
+				node,
+				agreementAttempt
+			)
+		) {
+			const confirmStatementEvent = {} as Event; //todo implement
+			this.eventBus.emit(confirmStatementEvent);
+		}
 	}
 
 	private getOrStartAgreementAttempt(node: Node, statement: Statement) {
