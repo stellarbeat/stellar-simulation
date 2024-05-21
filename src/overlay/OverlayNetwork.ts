@@ -1,27 +1,5 @@
-import assert from 'assert';
 import { PublicKey } from '..';
-
-export class Connection {
-	private constructor(
-		public readonly source: PublicKey,
-		public readonly target: PublicKey
-	) {}
-
-	equals(connection: Connection): boolean {
-		return (
-			(connection.source === this.source ||
-				connection.source === this.target) &&
-			(connection.target === this.source || connection.target === this.target)
-		);
-	}
-
-	static create(source: PublicKey, target: PublicKey): Connection {
-		//no self loops
-		assert(source !== target);
-
-		return new Connection(source, target);
-	}
-}
+import { Connection } from './Connection';
 
 //undirected graph
 export class OverlayNetwork {
@@ -56,7 +34,7 @@ export class OverlayNetwork {
 		this._connections.add(connection);
 	}
 
-	public getConnectedNodes(node: PublicKey): PublicKey[] {
+	public getNeighbours(node: PublicKey): PublicKey[] {
 		return Array.from(this._connections)
 			.filter((connection) => {
 				connection.source === node || connection.target === node;
