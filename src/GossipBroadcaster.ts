@@ -12,10 +12,10 @@ export interface GossipBroadcastStepResult {
 }
 
 export class GossipBroadcaster {
-	initializeBroadcast(source: PublicKey): GossipBroadcastState {
+	initializeBroadcast(sourceNode: PublicKey): GossipBroadcastState {
 		return {
 			processedNodes: new Set<string>(),
-			nodesToProcess: [source]
+			nodesToProcess: [sourceNode]
 		};
 	}
 
@@ -24,6 +24,7 @@ export class GossipBroadcaster {
 		overlay: OverlayNetwork,
 		state: GossipBroadcastState
 	): GossipBroadcastStepResult {
+		console.log(state.nodesToProcess);
 		if (state.nodesToProcess.length === 0) {
 			return { state, connectionsUsed: [] };
 		}
@@ -32,6 +33,7 @@ export class GossipBroadcaster {
 		const connectionsUsed: [PublicKey, PublicKey][] = [];
 
 		state.nodesToProcess.forEach((currentNode) => {
+			console.log(currentNode);
 			overlay.getNeighbours(currentNode).forEach((neighbor) => {
 				if (!state.processedNodes.has(neighbor)) {
 					state.processedNodes.add(neighbor);

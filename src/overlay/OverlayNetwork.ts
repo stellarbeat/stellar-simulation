@@ -6,9 +6,16 @@ export class OverlayNetwork {
 	private _nodes: Set<PublicKey> = new Set();
 	private _connections: Set<Connection> = new Set(); //undirectional graph
 
-	constructor(nodes: Set<PublicKey>, connections: Set<Connection>) {
+	constructor(
+		nodes: Set<PublicKey> = new Set(),
+		connections: Set<Connection> = new Set()
+	) {
 		this._nodes = nodes;
 		this._connections = connections;
+	}
+
+	public addNodes(nodes: PublicKey[]): void {
+		nodes.forEach((node) => this._nodes.add(node));
 	}
 
 	public addNode(node: PublicKey): void {
@@ -34,10 +41,14 @@ export class OverlayNetwork {
 		this._connections.add(connection);
 	}
 
+	public addConnections(connections: Connection[]): void {
+		connections.forEach((connection) => this.addConnection(connection));
+	}
+
 	public getNeighbours(node: PublicKey): PublicKey[] {
 		return Array.from(this._connections)
 			.filter((connection) => {
-				connection.source === node || connection.target === node;
+				return connection.source === node || connection.target === node;
 			})
 			.map((connection) => {
 				return connection.source === node
