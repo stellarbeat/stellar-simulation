@@ -32,12 +32,12 @@ class MyEventBus implements EventBus {
 export class Simulation {
 	setup(): void {
 		const broadCaster = new GossipBroadcaster();
-		const federatedVoting = new FederatedVoting(
+		/*const federatedVoting = new FederatedVoting(
 			new StatementValidator(),
 			new MyEventBus(),
 			new AcceptHandler(new VBlockingNodesDetector(), new QuorumService()),
 			new ConfirmHandler(new QuorumService())
-		);
+		);*/
 
 		/**       B --- C
 		 *      /        \
