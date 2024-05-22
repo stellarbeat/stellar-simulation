@@ -57,13 +57,12 @@ export class AcceptHandler {
 	}
 
 	private isRatified(node: Node, agreementAttempt: AgreementAttempt): boolean {
-		const quorumCandidate = agreementAttempt
-			.getAllVotes()
-			.map((vote) => vote.node);
+		const nodeSet = agreementAttempt.getAllVotes().map((vote) => vote.node);
 
-		return (
-			this.quorumService.isQuorum(quorumCandidate, node.peerQuorumSets) &&
-			this.quorumService.hasSliceInQuorum(node.quorumSet, quorumCandidate)
+		return this.quorumService.containsQuorumForV(
+			node.quorumSet,
+			nodeSet,
+			node.peerQuorumSets
 		);
 	}
 }

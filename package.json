@@ -3,7 +3,7 @@
 	"version": "0.0.1",
 	"scripts": {
 		"build": "tsc",
-		"test": "tsc && node ./lib/tests/*"
+		"test": "tsc && node --test ./lib/tests/*"
 	},
 	"description": "",
 	"files": [

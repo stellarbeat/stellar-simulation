@@ -7,10 +7,8 @@ export class QuorumService {
 		return this.hasSliceInSet(quorumSet, quorum);
 	}
 
-	//we can't add the node itself to the nodeset, because it could be filtered out in the membersThatHaveSliceInSet function
-	//and the whole point is to know if the set forms a quorum and if the node 'trusts
-	//the quorum.
-	public isQuorum(
+	public containsQuorumForV(
+		quorumSetOfV: QuorumSet,
 		nodeSet: PublicKey[],
 		quorumSets: Map<PublicKey, QuorumSet>
 	): boolean {
@@ -20,15 +18,20 @@ export class QuorumService {
 		);
 
 		if (membersThatHaveSliceInSet.length === nodeSet.length) {
-			return true; // the nodeSet contains a slice for each member, it is a quorum
+			//we have a quorum
+			return this.hasSliceInSet(quorumSetOfV, membersThatHaveSliceInSet); //is it a quorum for V
 		}
 
 		if (membersThatHaveSliceInSet.length === 0) {
 			return false; // no member has a slice in the set, it is not a quorum
 		}
 
-		// Check if the members that have a slice in the set form a quorum
-		return this.isQuorum(membersThatHaveSliceInSet, quorumSets);
+		// Check if the members that have a slice in the set form a (smaller) quorum themselves
+		return this.containsQuorumForV(
+			quorumSetOfV,
+			membersThatHaveSliceInSet,
+			quorumSets
+		);
 	}
 
 	private getMembersWithSliceInSet(
