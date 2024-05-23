@@ -20,6 +20,10 @@ export class Node {
 		this.peerQuorumSets.set(publicKey, quorumSet);
 	}
 
+	hasVoted(): boolean {
+		return this.agreementAttempts.some((attempt) => attempt.votedFor);
+	}
+
 	startNewAgreementAttempt(statement: Statement): AgreementAttempt {
 		const attempt = AgreementAttempt.create(statement);
 		this.agreementAttempts.push(attempt);
@@ -40,13 +44,19 @@ export class Node {
 	}
 
 	moveAgreementAttemptToConfirmPhase(agreementAttempt: AgreementAttempt): void {
-		assert(this.getAgreementAttemptInAcceptedOrConfirmedPhase() === null);
+		assert(this.getAgreementAttemptInConfirmedPhase() === null);
 		agreementAttempt.phase = 'confirmed';
 	}
 
 	getAgreementAttemptInAcceptedOrConfirmedPhase(): AgreementAttempt | null {
 		return (
 			this.agreementAttempts.find((attempt) => attempt.phase !== 'unknown') ??
+			null
+		);
+	}
+	getAgreementAttemptInConfirmedPhase(): AgreementAttempt | null {
+		return (
+			this.agreementAttempts.find((attempt) => attempt.phase === 'confirmed') ??
 			null
 		);
 	}

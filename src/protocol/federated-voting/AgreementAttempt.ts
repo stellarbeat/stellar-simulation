@@ -6,8 +6,10 @@ import { Vote } from './Vote';
  * An attempt on agreement by a specific node on a specific statement.
  */
 export class AgreementAttempt {
-	phase: 'unknown' | 'accepted' | 'confirmed' = 'unknown'; //where we are in this round of federated voting for this node
 	private peerVotes: Set<Vote> = new Set(); //the votes for this statement it picked up from its peers
+
+	public phase: 'unknown' | 'accepted' | 'confirmed' = 'unknown'; //where we are in this round of federated voting for this node
+	public votedFor = false; //if the node voted for this statement
 
 	private constructor(public readonly statement: Statement) {}
 

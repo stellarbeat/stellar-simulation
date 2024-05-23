@@ -2,6 +2,7 @@ import { VBlockingNodesDetector } from '../../../services/VBlockingNodesDetector
 import { QuorumService } from '../../../services/QuorumService';
 import { AgreementAttempt } from '../AgreementAttempt';
 import { Node } from '../Node';
+import assert from 'assert';
 
 //handles vote(statement) and vote(accept(statement)) messages
 export class AcceptHandler {
@@ -27,12 +28,13 @@ export class AcceptHandler {
 		node: Node,
 		agreementAttempt: AgreementAttempt
 	): boolean {
+		assert(
+			node.getAgreementAttemptFor(agreementAttempt.statement) ===
+				agreementAttempt
+		);
+
 		if (node.getAgreementAttemptInAcceptedOrConfirmedPhase !== null)
 			return false;
-
-		if (agreementAttempt.phase !== 'unknown') {
-			return false;
-		}
 
 		if (this.isVBlocking(node, agreementAttempt)) {
 			return true;

@@ -24,7 +24,13 @@ export class FederatedVoting {
 			return;
 		}
 
-		node.startNewAgreementAttempt(statement);
+		if (node.hasVoted()) {
+			return; //can only vote once
+		}
+
+		const agreementAttempt = this.getOrStartAgreementAttempt(node, statement);
+		agreementAttempt.votedFor = true;
+
 		const vote = new Vote(statement, false, node.publicKey);
 		const event = new VoteEvent(node.publicKey, vote);
 		this.eventBus.emit(event); //todo rethink eventbus (move to higher level?)
