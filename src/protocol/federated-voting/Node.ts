@@ -54,6 +54,7 @@ export class Node {
 			null
 		);
 	}
+
 	getAgreementAttemptInConfirmedPhase(): AgreementAttempt | null {
 		return (
 			this.agreementAttempts.find((attempt) => attempt.phase === 'confirmed') ??

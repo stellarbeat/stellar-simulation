@@ -19,7 +19,7 @@ export class AcceptHandler {
 			return false;
 		}
 
-		node.moveAgreementAttemptToAcceptPhase(agreementAttempt);
+		node.moveAgreementAttemptToAcceptPhase(agreementAttempt); //todo move to FederatedVoting protocol and rename this class
 
 		return true;
 	}
@@ -33,7 +33,7 @@ export class AcceptHandler {
 				agreementAttempt
 		);
 
-		if (node.getAgreementAttemptInAcceptedOrConfirmedPhase !== null)
+		if (node.getAgreementAttemptInAcceptedOrConfirmedPhase() !== null)
 			return false;
 
 		if (this.isVBlocking(node, agreementAttempt)) {
@@ -48,6 +48,7 @@ export class AcceptHandler {
 	}
 
 	private isVBlocking(node: Node, agreementAttempt: AgreementAttempt): boolean {
+		console.log(this.vBlockingNodesDetector.isSetVBlocking);
 		const acceptingNodes = agreementAttempt
 			.getAcceptVotes()
 			.map((vote) => vote.node);

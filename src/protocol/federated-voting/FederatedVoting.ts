@@ -63,6 +63,7 @@ export class FederatedVoting {
 				agreementAttempt
 			)
 		) {
+			node.moveAgreementAttemptToAcceptPhase(agreementAttempt);
 			this.voteToAccept(node, vote.statement);
 			return;
 		}
