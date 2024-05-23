@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
-import { VBlockingNodesDetector } from '../src/services/VBlockingNodesDetector';
+import { VBlockingNodesDetector } from '../../src/services/VBlockingNodesDetector';
 
 describe('VBlockingNodesDetector', () => {
 	const vBlockingNodesDetector = new VBlockingNodesDetector();
