@@ -1,4 +1,4 @@
-import { PublicKey } from '..';
+import { PublicKey } from '../..';
 import { QuorumSet } from '../QuorumSet';
 
 export class QuorumService {

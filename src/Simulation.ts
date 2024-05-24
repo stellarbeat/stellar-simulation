@@ -1,15 +1,9 @@
 import EventEmitter from 'events';
 import { Event } from './Event';
 import { EventBus } from './EventBus';
-import { GossipBroadcaster } from './GossipBroadcaster';
-import { FederatedVoting } from './protocol/federated-voting/FederatedVoting';
-import { StatementValidator } from './protocol/federated-voting/StatementValidator';
-import { AcceptHandler } from './protocol/federated-voting/agreement-attempt-handler/AcceptHandler';
-import { ConfirmHandler } from './protocol/federated-voting/agreement-attempt-handler/ConfirmHandler';
-import { VBlockingNodesDetector } from './services/VBlockingNodesDetector';
-import { QuorumService } from './services/QuorumService';
-import { OverlayNetwork } from './overlay/OverlayNetwork';
+import { GossipBroadcaster } from './overlay/GossipBroadcaster';
 import { Connection } from './overlay/Connection';
+import { OverlayNetwork } from './overlay/OverlayNetwork';
 
 class MyEventBus implements EventBus {
 	eventEmitter = new EventEmitter();

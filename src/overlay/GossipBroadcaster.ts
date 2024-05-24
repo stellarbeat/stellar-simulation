@@ -1,5 +1,5 @@
-import { PublicKey } from '.';
-import { OverlayNetwork } from './overlay/OverlayNetwork';
+import { PublicKey } from '..';
+import { OverlayNetwork } from './OverlayNetwork';
 
 export interface GossipBroadcastState {
 	processedNodes: Set<string>;
