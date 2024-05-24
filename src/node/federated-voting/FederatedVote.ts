@@ -25,7 +25,7 @@ export class FederatedVote {
 	) {}
 
 	//vote(statement)
-	vote(statement: Statement): Vote | null {
+	voteForStatement(statement: Statement): Vote | null {
 		assert(this.statementValidator.isValid(statement, this.node));
 		assert(!this.hasVotedForAStatement());
 
@@ -35,13 +35,8 @@ export class FederatedVote {
 		return new Vote(statement, false, this.node.publicKey);
 	}
 
-	private hasVotedForAStatement(): boolean {
-		//todo: if not voted on statement, but accepted a statement, should this return true?
-		return this.votedStatement !== null;
-	}
-
 	//receive vote from peer and return the vote to be sent to the network in response if any
-	receiveVote(vote: Vote): Vote | null {
+	processVote(vote: Vote): Vote | null {
 		if (vote.node === this.node.publicKey) return null; //it's the node own vote, agreement cannot be advanced
 
 		if (!this.statementValidator.isValid(vote.statement, this.node)) {
@@ -62,7 +57,7 @@ export class FederatedVote {
 		) {
 			agreementAttempt.phase = 'accepted';
 
-			return this.voteAcceptStatement(vote.statement);
+			return this.voteForAcceptStatement(vote.statement);
 		}
 
 		if (
@@ -78,15 +73,20 @@ export class FederatedVote {
 		return null;
 	}
 
+	//only the protocol can vote(accept(statement))
+	private voteForAcceptStatement(statement: Statement) {
+		return new Vote(statement, true, this.node.publicKey);
+	}
+
+	private hasVotedForAStatement(): boolean {
+		//todo: if not voted on statement, but accepted a statement, should this return true?
+		return this.votedStatement !== null;
+	}
+
 	private getOrStartAgreementAttemptFor(
 		statement: Statement
 	): AgreementAttempt {
 		return this.agreementAttempts.getOrAddIfNotExists(statement);
-	}
-
-	//only the protocol can vote(accept(statement))
-	private voteAcceptStatement(statement: Statement) {
-		return new Vote(statement, true, this.node.publicKey);
 	}
 
 	public getAgreementAttempts(): AgreementAttempt[] {

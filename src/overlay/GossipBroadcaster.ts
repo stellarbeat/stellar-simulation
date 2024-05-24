@@ -2,6 +2,7 @@ import { PublicKey } from '..';
 import { OverlayNetwork } from './OverlayNetwork';
 
 export interface GossipBroadcastState {
+	message: any;
 	processedNodes: Set<string>;
 	nodesToProcess: string[];
 }
@@ -12,8 +13,12 @@ export interface GossipBroadcastStepResult {
 }
 
 export class GossipBroadcaster {
-	initializeBroadcast(sourceNode: PublicKey): GossipBroadcastState {
+	initializeBroadcast(
+		sourceNode: PublicKey,
+		message: any
+	): GossipBroadcastState {
 		return {
+			message: message,
 			processedNodes: new Set<string>(),
 			nodesToProcess: [sourceNode]
 		};
