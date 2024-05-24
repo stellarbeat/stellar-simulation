@@ -22,10 +22,6 @@ export class ConfirmHandler {
 		node: Node,
 		agreementAttempt: AgreementAttempt
 	): boolean {
-		if (agreementAttempt.phase !== 'confirmed') {
-			return false; //todo: confirm that you can move directly from unkonwn to confirm phase
-		}
-
 		if (node.getAgreementAttemptInAcceptedOrConfirmedPhase() !== null)
 			return false;
 

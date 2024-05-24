@@ -32,7 +32,6 @@ export class GossipBroadcaster {
 		const connectionsUsed: [PublicKey, PublicKey][] = [];
 
 		state.nodesToProcess.forEach((currentNode) => {
-			console.log(overlay.getNeighbours(currentNode));
 			overlay.getNeighbours(currentNode).forEach((neighbor) => {
 				if (!state.processedNodes.has(neighbor)) {
 					state.processedNodes.add(neighbor);
