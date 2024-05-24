@@ -73,5 +73,29 @@ describe('ConfirmHandler', () => {
 				node.peerQuorumSets
 			]);
 		});
+
+		it('should move to confirm phase if agreement attempt is ratified', (test) => {
+			const node = setupNode('A');
+			const agreementAttempt = node.startNewAgreementAttempt('statement');
+
+			const vote1 = new Vote('statement', true, 'B');
+			const vote2 = new Vote('statement', true, 'C');
+
+			agreementAttempt.addPeerVote(vote1);
+			agreementAttempt.addPeerVote(vote2);
+
+			const containsQuorumForVSpy = test.mock.method(
+				quorumService,
+				'containsQuorumForV'
+			);
+			containsQuorumForVSpy.mock.mockImplementation(() => true);
+
+			const result = confirmHandler.tryToMoveToConfirmPhase(
+				node,
+				agreementAttempt
+			);
+			assert.strictEqual(result, true);
+			assert.strictEqual(agreementAttempt.phase, 'confirmed');
+		});
 	});
 });
