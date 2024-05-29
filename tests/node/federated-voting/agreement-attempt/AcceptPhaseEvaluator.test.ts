@@ -81,9 +81,9 @@ describe('AcceptPhaseEvaluator', () => {
 			const agreementAttempt = AgreementAttempt.create('statement');
 			agreementAttempts.add(agreementAttempt);
 
-			agreementAttempt.addPeerThatVotedToAcceptStatement('B');
-			agreementAttempt.addPeerThatVotedToAcceptStatement('C');
-			agreementAttempt.addPeerThatVotedForStatement('D');
+			agreementAttempt.addVotedToAcceptStatement('B');
+			agreementAttempt.addVotedToAcceptStatement('C');
+			agreementAttempt.addVotedForStatement('D');
 
 			const isSetVBlockingSpy = test.mock.method(
 				vBlockingNodesDetector,
@@ -113,9 +113,9 @@ describe('AcceptPhaseEvaluator', () => {
 			const agreementAttempt = AgreementAttempt.create('statement');
 			agreementAttempts.add(agreementAttempt);
 
-			agreementAttempt.addPeerThatVotedToAcceptStatement('B');
-			agreementAttempt.addPeerThatVotedForStatement('C');
-			agreementAttempt.addPeerThatVotedForStatement('D');
+			agreementAttempt.addVotedToAcceptStatement('B');
+			agreementAttempt.addVotedForStatement('C');
+			agreementAttempt.addVotedForStatement('D');
 
 			const isSetVBlockingSpy = test.mock.method(
 				vBlockingNodesDetector,
@@ -145,9 +145,9 @@ describe('AcceptPhaseEvaluator', () => {
 			const agreementAttempt = AgreementAttempt.create('statement');
 			agreementAttempts.add(agreementAttempt);
 
-			agreementAttempt.addPeerThatVotedToAcceptStatement('B');
-			agreementAttempt.addPeerThatVotedForStatement('C');
-			agreementAttempt.addPeerThatVotedForStatement('D');
+			agreementAttempt.addVotedToAcceptStatement('B');
+			agreementAttempt.addVotedForStatement('C');
+			agreementAttempt.addVotedForStatement('D');
 
 			test.mock
 				.method(vBlockingNodesDetector, 'isSetVBlocking')

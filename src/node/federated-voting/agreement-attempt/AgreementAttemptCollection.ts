@@ -1,11 +1,9 @@
-import { Statement } from '../Statement';
+import { Node } from '../Node';
+import { Statement } from '../../Statement';
 import { AgreementAttempt } from './AgreementAttempt';
 
 export class AgreementAttemptCollection {
 	private attempts: Map<Statement, AgreementAttempt> = new Map();
-	constructor() {
-		this.attempts = new Map();
-	}
 
 	add(attempt: AgreementAttempt): void {
 		this.attempts.set(attempt.statement, attempt);
@@ -21,10 +19,10 @@ export class AgreementAttemptCollection {
 		return this.attempts.get(statement) ?? null;
 	}
 
-	getOrAddIfNotExists(statement: Statement): AgreementAttempt {
+	getOrAddIfNotExists(node: Node, statement: Statement): AgreementAttempt {
 		let attempt = this.get(statement);
 		if (attempt === null) {
-			attempt = AgreementAttempt.create(statement);
+			attempt = AgreementAttempt.create(node, statement);
 			this.add(attempt);
 		}
 		return attempt;

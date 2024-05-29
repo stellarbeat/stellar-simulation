@@ -2,7 +2,7 @@ import assert from 'node:assert';
 import { beforeEach, describe, it } from 'node:test';
 import { QuorumService } from '../../../src/node/services/QuorumService';
 import { PublicKey } from '../../../src';
-import { QuorumSet } from '../../../src/node/QuorumSet';
+import { QuorumSet } from '../../../src/node/federated-voting/QuorumSet';
 
 describe('QuorumService', () => {
 	const quorumService = new QuorumService();

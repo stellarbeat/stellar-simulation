@@ -1,8 +1,8 @@
 import { Simulation } from './Simulation';
 
-export { Node } from './node/Node';
+export { Node } from './node/federated-voting/Node';
 export { Simulation } from './Simulation';
-export { Statement } from './node/federated-voting/Statement';
+export { Statement } from './node/Statement';
 
 export type PublicKey = string;
 

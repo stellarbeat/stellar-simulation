@@ -1,4 +1,4 @@
-import { Node } from '../..';
+import { Node } from './federated-voting/Node';
 import { Statement } from './Statement';
 
 //in the future this should be an interface, that is implemented in the context (e.g. valid statement in ledger, valid lunch option, etc.)

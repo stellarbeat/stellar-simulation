@@ -7,9 +7,9 @@ import {
 } from './overlay/GossipBroadcaster';
 import { Connection } from './overlay/Connection';
 import { OverlayNetwork } from './overlay/OverlayNetwork';
-import { QuorumSet } from './node/QuorumSet';
-import { Node } from './node/Node';
-import { FederatedVote } from './node/federated-voting/FederatedVote';
+import { QuorumSet } from './node/federated-voting/QuorumSet';
+import { Node } from './node/federated-voting/Node';
+import { FederatedVotingAgreementAttempts } from './node/federated-voting/FederatedVotingAgreementAttempts';
 import { AcceptPhaseEvaluator } from './node/federated-voting/agreement-attempt/AcceptPhaseEvaluator';
 import { StatementValidator } from './node/federated-voting/StatementValidator';
 import { QuorumService } from './node/services/QuorumService';
@@ -43,7 +43,7 @@ export class Simulation {
 		nodeId: string,
 		quorumSet: QuorumSet,
 		quorumSets: Map<PublicKey, QuorumSet>
-	): [Node, FederatedVote] {
+	): [Node, FederatedVotingAgreementAttempts] {
 		const node = new Node(nodeId, quorumSet);
 		const statementValidator = new StatementValidator();
 		const quorumService = new QuorumService();
@@ -53,7 +53,7 @@ export class Simulation {
 			quorumService
 		);
 		const confirmPhaseEvaluator = new ConfirmPhaseEvaluator(quorumService);
-		const federatedVote = new FederatedVote(
+		const federatedVote = new FederatedVotingAgreementAttempts(
 			node,
 			statementValidator,
 			acceptPhaseEvaluator,

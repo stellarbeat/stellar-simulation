@@ -57,8 +57,8 @@ describe('ConfirmPhaseEvaluator', () => {
 			const agreementAttempt = AgreementAttempt.create('statement');
 			agreementAttemptCollection.add(agreementAttempt);
 
-			agreementAttempt.addPeerThatVotedForStatement('B');
-			agreementAttempt.addPeerThatVotedToAcceptStatement('C');
+			agreementAttempt.addVotedForStatement('B');
+			agreementAttempt.addVotedToAcceptStatement('C');
 
 			const containsQuorumForVSpy = test.mock.method(
 				quorumService,
@@ -87,8 +87,8 @@ describe('ConfirmPhaseEvaluator', () => {
 			const agreementAttempt = AgreementAttempt.create('statement');
 			agreementAttemptCollection.add(agreementAttempt);
 
-			agreementAttempt.addPeerThatVotedToAcceptStatement('B');
-			agreementAttempt.addPeerThatVotedToAcceptStatement('C');
+			agreementAttempt.addVotedToAcceptStatement('B');
+			agreementAttempt.addVotedToAcceptStatement('C');
 
 			const containsQuorumForVSpy = test.mock.method(
 				quorumService,

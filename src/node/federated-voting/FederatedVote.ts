@@ -1,95 +1,87 @@
-import { Statement } from './Statement';
-import { Node } from '../Node';
-import { StatementValidator } from './StatementValidator';
+import { Statement } from '../Statement';
 import { Vote } from './Vote';
-import { AcceptPhaseEvaluator } from './agreement-attempt/AcceptPhaseEvaluator';
-import { ConfirmPhaseEvaluator } from './agreement-attempt/ConfirmPhaseEvaluator';
-import { AgreementAttempt } from './agreement-attempt/AgreementAttempt';
 import { AgreementAttemptCollection } from './agreement-attempt/AgreementAttemptCollection';
-import assert from 'assert';
+import { Node } from './Node';
+import EventEmitter from 'events';
+import { AgreementAttempt } from './agreement-attempt/AgreementAttempt';
 
-//Manages the voting process for a node in the federated voting protocol.
-//A node can vote on a statement or vote to accept it. When a statement is confirmed, it can act upon it.
-//Tracks all agreement attempts and handles state changes of these attempts.
-export class FederatedVote {
+export class FederatedVote extends EventEmitter {
 	private agreementAttempts: AgreementAttemptCollection =
 		new AgreementAttemptCollection();
-	private votedStatement: Statement | null = null;
+	private nodeHasVotedForAStatement = false;
+	private consensus: Statement | null = null;
 
-	constructor(
-		private node: Node,
-		private statementValidator: StatementValidator, //or should only valid Statements be passed to this class?
-		private acceptPhaseEvaluator: AcceptPhaseEvaluator,
-		private confirmPhaseEvaluator: ConfirmPhaseEvaluator,
-		private phaseObserver: any //todo
-	) {}
+	constructor(public readonly node: Node) {
+		super();
+	}
 
 	//vote(statement)
 	voteForStatement(statement: Statement): Vote | null {
-		assert(this.statementValidator.isValid(statement, this.node));
-		assert(!this.hasVotedForAStatement());
+		if (this.nodeHasVotedForAStatement) return null;
 
 		this.getOrStartAgreementAttemptFor(statement);
-		this.votedStatement = statement;
 
-		return new Vote(statement, false, this.node.publicKey);
+		const vote = new Vote(
+			statement,
+			false,
+			this.node.publicKey,
+			this.node.quorumSet
+		);
+		this.nodeHasVotedForAStatement = true;
+		this.processVote(vote);
+
+		return vote; // ready to emit to network
 	}
 
 	//receive vote from peer and return the vote to be sent to the network in response if any
 	processVote(vote: Vote): Vote | null {
-		if (vote.node === this.node.publicKey) return null; //it's the node own vote, agreement cannot be advanced
+		const agreementAttempt = this.getOrStartAgreementAttempt(vote);
 
-		if (!this.statementValidator.isValid(vote.statement, this.node)) {
+		if (agreementAttempt.tryMoveToAcceptPhase()) {
+			const vote = this.voteForAcceptStatement(agreementAttempt.statement);
+			this.processVote(vote);
+			return vote; //ready to emit
+		}
+
+		if (agreementAttempt.tryMoveToConfirmPhase()) {
+			//todo: emit event upon split consensus detected? this could happen if there is no quorum intersection in the network
+			this.consensus = agreementAttempt.statement;
+			this.emit('agreement', agreementAttempt);
 			return null;
-		}
-
-		const agreementAttempt = this.getOrStartAgreementAttemptFor(vote.statement);
-		if (vote.accept)
-			agreementAttempt.addPeerThatVotedToAcceptStatement(vote.node);
-		else agreementAttempt.addPeerThatVotedForStatement(vote.node);
-
-		if (
-			this.acceptPhaseEvaluator.canMoveToAcceptPhase(
-				agreementAttempt,
-				this.agreementAttempts,
-				this.node
-			)
-		) {
-			agreementAttempt.phase = 'accepted';
-
-			return this.voteForAcceptStatement(vote.statement);
-		}
-
-		if (
-			this.confirmPhaseEvaluator.canMoveToConfirmPhase(
-				agreementAttempt,
-				this.agreementAttempts,
-				this.node
-			)
-		) {
-			agreementAttempt.phase = 'confirmed';
 		}
 
 		return null;
 	}
 
-	//only the protocol can vote(accept(statement))
-	private voteForAcceptStatement(statement: Statement) {
-		return new Vote(statement, true, this.node.publicKey);
+	getConsensus(): Statement | null {
+		return this.consensus;
 	}
 
-	private hasVotedForAStatement(): boolean {
-		//todo: if not voted on statement, but accepted a statement, should this return true?
-		return this.votedStatement !== null;
+	hasConsensus(): boolean {
+		return this.consensus !== null;
+	}
+
+	//only the protocol can vote(accept(statement))
+	private voteForAcceptStatement(statement: Statement) {
+		return new Vote(statement, true, this.node.publicKey, this.node.quorumSet);
+	}
+
+	private getOrStartAgreementAttempt(vote: Vote): AgreementAttempt {
+		const agreementAttempt = this.getOrStartAgreementAttemptFor(vote.statement);
+
+		if (vote.accept)
+			agreementAttempt.addVotedToAcceptStatement(
+				vote.publicKey,
+				vote.quorumSet
+			);
+		else agreementAttempt.addVotedForStatement(vote.publicKey, vote.quorumSet);
+
+		return agreementAttempt;
 	}
 
 	private getOrStartAgreementAttemptFor(
 		statement: Statement
 	): AgreementAttempt {
-		return this.agreementAttempts.getOrAddIfNotExists(statement);
-	}
-
-	public getAgreementAttempts(): AgreementAttempt[] {
-		return this.agreementAttempts.getAll();
+		return this.agreementAttempts.getOrAddIfNotExists(this.node, statement);
 	}
 }
