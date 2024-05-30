@@ -1,7 +1,18 @@
 import { QuorumSet } from './QuorumSet';
 import { PublicKey } from '../..';
 
-//Todo: this node class and operations is relevant for federated-voting and scp, not for overlay. We need a better structure
+/**
+ * A node is a participant in an FBAS system/network.
+ * @see https://stellar.org/learn/stellar-consensus-protocol
+ * @see https://medium.com/stellarbeatio/stellar-fbas-intuition-5b8018f58f3e
+ *
+ * The quorumSet of a node defines the slices (sets of nodes) that the node trusts to reach consensus.
+ * When a node hears all the nodes in any of its slices assert a statement, it assumes no functioning node
+ * will ever contradict that statement.
+ *
+ * A quorum is a set of nodes that can reach agreement on a statement. A quorum contains a slice for each member.
+ * Thus every member of a quorum can be convinced of a statement by the members of that quorum.
+ */
 export class Node {
 	constructor(public publicKey: PublicKey, public quorumSet: QuorumSet) {}
 
@@ -10,25 +21,30 @@ export class Node {
 	}
 
 	public isQuorum(quorumCandidate: Map<PublicKey, QuorumSet>): boolean {
-		const membersThatHaveSliceInCandidate =
-			this.getMembersWithSliceInSet(quorumCandidate);
+		const originalQuorumCandidateSize = quorumCandidate.size;
 
-		if (membersThatHaveSliceInCandidate.size === quorumCandidate.size) {
-			//if all members of the candidate have a slice in the candidate, we have a quorum!
-			//but the quorum could be smaller than the candidate, and does not neccesarily include this node itself
-			//so we need to check if this node is part of the quorum
-			return this.hasSliceInSet(this.quorumSet, quorumCandidate);
+		if (originalQuorumCandidateSize === 0) {
+			return false;
 		}
 
-		if (membersThatHaveSliceInCandidate.size === 0) {
-			return false; // no member has a slice in the set, it is not a quorum
+		quorumCandidate = this.removeMembersNotPartOfQuorum(quorumCandidate);
+
+		if (originalQuorumCandidateSize === quorumCandidate.size) {
+			// the original quorumCandidate has not been shrunk down and is a quorum
+			return this.isThisNodePartOfQuorum(quorumCandidate);
 		}
 
-		// Check if the members that have a slice in the set form a (smaller) quorum themselves
-		return this.isQuorum(membersThatHaveSliceInCandidate);
+		// Check if the shrunk down quorumCandidate is a quorum
+		return this.isQuorum(quorumCandidate);
 	}
 
-	private getMembersWithSliceInSet(
+	private isThisNodePartOfQuorum(
+		quorumCandidate: Map<PublicKey, QuorumSet>
+	): boolean {
+		return this.hasSliceInSet(this.quorumSet, quorumCandidate);
+	}
+
+	private removeMembersNotPartOfQuorum(
 		quorumCandidate: Map<PublicKey, QuorumSet>
 	): Map<PublicKey, QuorumSet> {
 		const nodesThatContainSlice = new Map<PublicKey, QuorumSet>();
