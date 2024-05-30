@@ -20,6 +20,11 @@ export class Node {
 		this.quorumSet = quorumSet;
 	}
 
+	/**
+	 * Check if the given quorumCandidate is a quorum and this node is a member.
+	 *
+	 * A quorum is a set of nodes where every member has a slice in the quorum.
+	 */
 	public isQuorum(quorumCandidate: Map<PublicKey, QuorumSet>): boolean {
 		const originalQuorumCandidateSize = quorumCandidate.size;
 
@@ -27,7 +32,7 @@ export class Node {
 			return false;
 		}
 
-		quorumCandidate = this.removeMembersNotPartOfQuorum(quorumCandidate);
+		quorumCandidate = this.removeMembersWithoutSlice(quorumCandidate);
 
 		if (originalQuorumCandidateSize === quorumCandidate.size) {
 			// the original quorumCandidate has not been shrunk down and is a quorum
@@ -38,13 +43,11 @@ export class Node {
 		return this.isQuorum(quorumCandidate);
 	}
 
-	private isThisNodePartOfQuorum(
-		quorumCandidate: Map<PublicKey, QuorumSet>
-	): boolean {
-		return this.hasSliceInSet(this.quorumSet, quorumCandidate);
+	private isThisNodePartOfQuorum(quorum: Map<PublicKey, QuorumSet>): boolean {
+		return this.hasSliceInSet(this.quorumSet, quorum);
 	}
 
-	private removeMembersNotPartOfQuorum(
+	private removeMembersWithoutSlice(
 		quorumCandidate: Map<PublicKey, QuorumSet>
 	): Map<PublicKey, QuorumSet> {
 		const nodesThatContainSlice = new Map<PublicKey, QuorumSet>();

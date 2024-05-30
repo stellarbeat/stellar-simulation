@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { PublicKey } from '..';
+import { PublicKey } from '../..';
 
 export class Connection {
 	private constructor(

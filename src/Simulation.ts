@@ -9,13 +9,7 @@ import { Connection } from './overlay/Connection';
 import { OverlayNetwork } from './overlay/OverlayNetwork';
 import { QuorumSet } from './node/federated-voting/QuorumSet';
 import { Node } from './node/federated-voting/Node';
-import { FederatedVotingAgreementAttempts } from './node/federated-voting/FederatedVotingAgreementAttempts';
-import { AcceptPhaseEvaluator } from './node/federated-voting/agreement-attempt/AcceptPhaseEvaluator';
-import { StatementValidator } from './node/federated-voting/StatementValidator';
-import { QuorumService } from './node/services/QuorumService';
-import { VBlockingNodesDetector } from './node/services/VBlockingNodesDetector';
-import { ConfirmPhaseEvaluator } from './node/federated-voting/agreement-attempt/ConfirmPhaseEvaluator';
-import { PublicKey } from '.';
+import { FederatedVote } from './node/federated-voting/FederatedVote';
 
 class MyEventBus implements EventBus {
 	eventEmitter = new EventEmitter();
@@ -41,26 +35,10 @@ export class Simulation {
 
 	private setupNode(
 		nodeId: string,
-		quorumSet: QuorumSet,
-		quorumSets: Map<PublicKey, QuorumSet>
-	): [Node, FederatedVotingAgreementAttempts] {
+		quorumSet: QuorumSet
+	): [Node, FederatedVote] {
 		const node = new Node(nodeId, quorumSet);
-		const statementValidator = new StatementValidator();
-		const quorumService = new QuorumService();
-		const vBlockingNodesDetector = new VBlockingNodesDetector();
-		const acceptPhaseEvaluator = new AcceptPhaseEvaluator(
-			vBlockingNodesDetector,
-			quorumService
-		);
-		const confirmPhaseEvaluator = new ConfirmPhaseEvaluator(quorumService);
-		const federatedVote = new FederatedVotingAgreementAttempts(
-			node,
-			statementValidator,
-			acceptPhaseEvaluator,
-			confirmPhaseEvaluator,
-			{}
-		);
-		node.peerQuorumSets = quorumSets;
+		const federatedVote = new FederatedVote(node);
 		return [node, federatedVote];
 	}
 
@@ -79,25 +57,14 @@ export class Simulation {
 		 *       E ---- F
 		 **/
 
-		const quorumSet: QuorumSet = {
-			threshold: 4,
-			validators: ['A', 'B', 'C', 'D', 'E', 'F'],
-			innerQSets: []
-		};
-		const quorumSets = new Map<string, QuorumSet>();
-		quorumSets.set('A', quorumSet);
-		quorumSets.set('B', quorumSet);
-		quorumSets.set('C', quorumSet);
-		quorumSets.set('D', quorumSet);
-		quorumSets.set('E', quorumSet);
-		quorumSets.set('F', quorumSet);
+		const quorumSet = new QuorumSet(4, ['A', 'B', 'C', 'D', 'E', 'F'], []);
 
-		const [nodeA, federatedVoteA] = this.setupNode('A', quorumSet, quorumSets);
-		const [nodeB, federatedVoteB] = this.setupNode('B', quorumSet, quorumSets);
-		const [nodeC, federatedVoteC] = this.setupNode('C', quorumSet, quorumSets);
-		const [nodeD, federatedVoteD] = this.setupNode('D', quorumSet, quorumSets);
-		const [nodeE, federatedVoteE] = this.setupNode('E', quorumSet, quorumSets);
-		const [nodeF, federatedVoteF] = this.setupNode('F', quorumSet, quorumSets);
+		const [nodeA, federatedVoteA] = this.setupNode('A', quorumSet);
+		const [nodeB, federatedVoteB] = this.setupNode('B', quorumSet);
+		const [nodeC, federatedVoteC] = this.setupNode('C', quorumSet);
+		const [nodeD, federatedVoteD] = this.setupNode('D', quorumSet);
+		const [nodeE, federatedVoteE] = this.setupNode('E', quorumSet);
+		const [nodeF, federatedVoteF] = this.setupNode('F', quorumSet);
 
 		const overlay = new OverlayNetwork();
 		overlay.addNodes([

@@ -2,9 +2,9 @@ import { PublicKey } from '../..';
 
 export class QuorumSet {
 	constructor(
+		public readonly threshold: number,
 		public readonly validators: PublicKey[],
-		public readonly innerQSets: QuorumSet[],
-		public readonly threshold: number
+		public readonly innerQSets: QuorumSet[]
 	) {}
 
 	isSetVBlocking(nodeSet: PublicKey[]): boolean {
