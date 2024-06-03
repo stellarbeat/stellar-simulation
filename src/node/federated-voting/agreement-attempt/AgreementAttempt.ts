@@ -27,11 +27,11 @@ export class AgreementAttempt {
 	}
 
 	//get vote(statement) + vote(accept(statement))
-	private getAllVotes(): Map<PublicKey, QuorumSet> {
+	public getAllVotes(): Map<PublicKey, QuorumSet> {
 		return new Map([...this.votesForStatement, ...this.votesToAcceptStatement]);
 	}
 
-	private getAcceptVotes(): Map<PublicKey, QuorumSet> {
+	public getAcceptVotes(): Map<PublicKey, QuorumSet> {
 		return this.votesToAcceptStatement;
 	}
 
@@ -40,6 +40,10 @@ export class AgreementAttempt {
 	}
 
 	tryMoveToAcceptPhase(): boolean {
+		if (this.phase !== 'unknown') {
+			return false;
+		}
+
 		if (this.areAcceptingNodesVBlocking()) {
 			this.phase = 'accepted';
 			return true;
@@ -54,6 +58,10 @@ export class AgreementAttempt {
 	}
 
 	tryMoveToConfirmPhase(): boolean {
+		if (this.phase === 'confirmed') {
+			return false;
+		}
+
 		if (this.isAcceptVoteRatified()) {
 			this.phase = 'confirmed';
 			return true;

@@ -10,9 +10,16 @@ describe('AgreementAttempt', () => {
 	};
 
 	describe('tryAccept', () => {
-		it('should fail if agreement attempt is not in unknown phase', () => {
+		it('should fail if agreement attempt is not in unknown phase', (test) => {
 			const node = setupNode('A');
 			const agreementAttempt = AgreementAttempt.create(node, 'statement');
+			const isSetVBlockingSpy = test.mock.method(
+				node.quorumSet,
+				'isSetVBlocking'
+			); //to make sure it's the status of the agreement attempt that causes the fail
+
+			isSetVBlockingSpy.mock.mockImplementation(() => true);
+
 			agreementAttempt.phase = 'accepted';
 
 			assert.strictEqual(agreementAttempt.tryMoveToAcceptPhase(), false);
@@ -107,10 +114,12 @@ describe('AgreementAttempt', () => {
 		});
 	});
 	describe('tryToMoveToConfirmPhase', () => {
-		it('should fail if agreement attempt is already in confirmed phase', () => {
+		it('should fail if agreement attempt is already in confirmed phase', (test) => {
 			const node = setupNode('A');
 			const agreementAttempt = AgreementAttempt.create(node, 'statement');
 			agreementAttempt.phase = 'confirmed';
+			const isQuorumSpy = test.mock.method(node, 'isQuorum');
+			isQuorumSpy.mock.mockImplementation(() => true);
 
 			assert.strictEqual(agreementAttempt.tryMoveToConfirmPhase(), false);
 			assert.strictEqual(agreementAttempt.phase, 'confirmed');

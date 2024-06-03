@@ -4,7 +4,7 @@ export class QuorumSet {
 	constructor(
 		public readonly threshold: number,
 		public readonly validators: PublicKey[],
-		public readonly innerQSets: QuorumSet[]
+		public readonly innerQSets: QuorumSet[] = []
 	) {}
 
 	isSetVBlocking(nodeSet: PublicKey[]): boolean {
@@ -40,6 +40,7 @@ export class QuorumSet {
 				}
 			}
 		}
+		console.log('leftUntillBlocked', leftUntillBlocked);
 
 		return false; //we can still reach the threshold!
 	}
