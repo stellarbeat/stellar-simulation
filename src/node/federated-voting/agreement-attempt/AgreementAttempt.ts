@@ -45,6 +45,9 @@ export class AgreementAttempt {
 		}
 
 		if (this.areAcceptingNodesVBlocking()) {
+			console.log(
+				'${this.node.publicKey}] vote(accept(${this.statement})) from ${Array.from(this.getAcceptVotes.keys)} are v-blocking'
+			);
 			this.phase = 'accepted';
 			return true;
 		}
@@ -77,10 +80,23 @@ export class AgreementAttempt {
 	}
 
 	private isVoteRatified(): boolean {
-		return this.node.isQuorum(this.getAllVotes());
+		const quorumOrNull = this.node.isQuorum(this.getAllVotes());
+		if (quorumOrNull !== null) {
+			console.log(
+				`${this.node.publicKey}] vote(${this.statement}) is a quorum: ${quorumOrNull.keys}`
+			);
+		}
+		return quorumOrNull !== null;
 	}
 
 	private isAcceptVoteRatified(): boolean {
-		return this.node.isQuorum(this.getAcceptVotes());
+		const quorumOrNull = this.node.isQuorum(this.getAcceptVotes());
+		if (quorumOrNull !== null) {
+			console.log(
+				`${this.node.publicKey}] vote(accept(${this.statement})) is a quorum: ${quorumOrNull.keys}`
+			);
+		}
+
+		return quorumOrNull !== null;
 	}
 }

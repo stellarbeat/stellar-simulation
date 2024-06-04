@@ -3,14 +3,20 @@ import { Vote } from './Vote';
 import { AgreementAttemptCollection } from './agreement-attempt/AgreementAttemptCollection';
 import { Node } from './Node';
 import { AgreementAttempt } from './agreement-attempt/AgreementAttempt';
+import { BaseQuorumSet } from '../BaseQuorumSet';
+import { QuorumSet } from './QuorumSet';
+import { PublicKey } from '../..';
 
 export class FederatedVote {
 	private agreementAttempts: AgreementAttemptCollection =
 		new AgreementAttemptCollection();
 	private _nodeHasVotedForAStatement = false;
 	private consensus: Statement | null = null;
+	private node: Node;
 
-	constructor(public readonly node: Node) {}
+	constructor(publicKey: PublicKey, quorumSet: BaseQuorumSet) {
+		this.node = new Node(publicKey, QuorumSet.fromBaseQuorumSet(quorumSet));
+	}
 
 	//vote(statement)
 	voteForStatement(statement: Statement): Vote | null {
@@ -20,9 +26,10 @@ export class FederatedVote {
 			statement,
 			false,
 			this.node.publicKey,
-			this.node.quorumSet
+			this.node.quorumSet.toBaseQuorumSet()
 		);
 		this._nodeHasVotedForAStatement = true;
+		console.log(`Node ${this.node.publicKey}] vote(${statement})`);
 
 		this.processVote(vote);
 
@@ -34,20 +41,44 @@ export class FederatedVote {
 	}
 
 	processVote(vote: Vote): Vote | null {
-		const agreementAttempt = this.getOrStartAgreementAttempt(vote.statement);
+		console.log(`${this.node.publicKey}] process ${vote}`);
+		let agreementAttempt = this.agreementAttempts.get(vote.statement);
+		if (!agreementAttempt) {
+			console.log(
+				`${this.node.publicKey}] New agreement attempt for statement ${vote.statement}`
+			);
+			agreementAttempt = AgreementAttempt.create(this.node, vote.statement);
+			this.agreementAttempts.add(agreementAttempt);
+		}
+
+		//todo: check if the vote is already processed
+		console.log(
+			`${this.node.publicKey}] add ${vote} to agreement attempt for statement ${vote.statement}`
+		);
 		this.addVoteToAgreementAttempt(agreementAttempt, vote);
 
 		if (agreementAttempt.tryMoveToAcceptPhase()) {
-			const vote = this.createVoteForAcceptStatement(
+			console.log(
+				`${this.node.publicKey}] moved agreement on statement ${vote.statement} to accept phase`
+			);
+
+			const myVote = this.createVoteForAcceptStatement(
 				agreementAttempt.statement
 			);
-			this.processVote(vote);
+
+			this.processVote(myVote);
 			return vote; //ready to emit
 		}
 
 		if (agreementAttempt.tryMoveToConfirmPhase()) {
+			console.log(
+				`${this.node.publicKey}] moved agreement on statement ${vote.statement} to confirm phase`
+			);
 			//todo: emit event upon split consensus detected? this could happen if there is no quorum intersection in the network
 			this.consensus = agreementAttempt.statement;
+			console.log(
+				`${this.node.publicKey}] consensus reached on statement ${vote.statement}`
+			);
 			return null;
 		}
 
@@ -56,7 +87,13 @@ export class FederatedVote {
 
 	//only the protocol can vote(accept(statement))
 	private createVoteForAcceptStatement(statement: Statement) {
-		return new Vote(statement, true, this.node.publicKey, this.node.quorumSet);
+		console.log(`${this.node.publicKey}] vote(accept(${statement}))`);
+		return new Vote(
+			statement,
+			true,
+			this.node.publicKey,
+			this.node.quorumSet.toBaseQuorumSet()
+		);
 	}
 
 	getConsensus(): Statement | null {
@@ -71,8 +108,8 @@ export class FederatedVote {
 		return this.agreementAttempts.getAll();
 	}
 
-	private getOrStartAgreementAttempt(statement: Statement): AgreementAttempt {
-		return this.agreementAttempts.getOrAddIfNotExists(this.node, statement);
+	updateQuorumSet(quorumSet: BaseQuorumSet): void {
+		this.node.updateQuorumSet(QuorumSet.fromBaseQuorumSet(quorumSet));
 	}
 
 	private addVoteToAgreementAttempt(
@@ -82,8 +119,12 @@ export class FederatedVote {
 		if (vote.accept)
 			agreementAttempt.addVotedToAcceptStatement(
 				vote.publicKey,
-				vote.quorumSet
+				QuorumSet.fromBaseQuorumSet(vote.quorumSet)
 			);
-		else agreementAttempt.addVotedForStatement(vote.publicKey, vote.quorumSet);
+		else
+			agreementAttempt.addVotedForStatement(
+				vote.publicKey,
+				QuorumSet.fromBaseQuorumSet(vote.quorumSet)
+			);
 	}
 }

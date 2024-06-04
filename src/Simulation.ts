@@ -1,135 +1,83 @@
-import EventEmitter from 'events';
-import { Event } from './Event';
-import { EventBus } from './EventBus';
-import {
-	GossipBroadcastState,
-	GossipBroadcaster
-} from './overlay/GossipBroadcaster';
-import { Connection } from './overlay/Connection';
-import { OverlayNetwork } from './overlay/OverlayNetwork';
-import { QuorumSet } from './node/federated-voting/QuorumSet';
-import { Node } from './node/federated-voting/Node';
-import { FederatedVote } from './node/federated-voting/FederatedVote';
-
-class MyEventBus implements EventBus {
-	eventEmitter = new EventEmitter();
-
-	emit(event: Event, payload?: Record<string, unknown>): void {
-		this.eventEmitter.emit(event.toString(), payload);
-	}
-
-	on(event: Event, callback: (event: Event) => void): void {
-		this.eventEmitter.on(event.toString(), callback);
-	}
-
-	off(event: Event): void {
-		this.eventEmitter.off(event.toString(), () => {
-			console.log('off');
-		});
-	}
-}
+import { BaseQuorumSet } from './node/BaseQuorumSet';
+import { NodeOrchestrator } from './node/NodeOrchestrator';
+import { Message } from './node/Message';
+import { PublicKey } from '.';
 
 export class Simulation {
-	private broadCastStates = new Set<GossipBroadcastState>();
-	private broadCaster = new GossipBroadcaster();
+	private messageQueue: Set<Message> = new Set();
+	private nodeMap: Map<PublicKey, NodeOrchestrator> = new Map();
 
-	private setupNode(
-		nodeId: string,
-		quorumSet: QuorumSet
-	): [Node, FederatedVote] {
-		const node = new Node(nodeId, quorumSet);
-		const federatedVote = new FederatedVote(node);
-		return [node, federatedVote];
+	/**       B --- C
+	 *      /        \
+	 * A ---          ---D
+	 *      \        /
+	 *       E ---- F
+	 **/
+	setup(): void {
+		//todo: take a json or something
+
+		const quorumSet: BaseQuorumSet = {
+			threshold: 4,
+			validators: ['A', 'B', 'C', 'D', 'E', 'F'],
+			innerQuorumSets: []
+		};
+
+		this.nodeMap.set('A', this.setupNode('A', quorumSet, ['B', 'E']));
+		this.nodeMap.set('B', this.setupNode('B', quorumSet, ['A', 'C']));
+		this.nodeMap.set('C', this.setupNode('C', quorumSet, ['B', 'D']));
+		this.nodeMap.set('D', this.setupNode('D', quorumSet, ['C', 'F']));
+		this.nodeMap.set('E', this.setupNode('E', quorumSet, ['A', 'F']));
+		this.nodeMap.set('F', this.setupNode('F', quorumSet, ['E', 'D']));
+
+		//todo: Commands: AddNode, RemoveNode, AddConnection, RemoveConnection, Vote, ReceiveMessage
+		//+ add them to the CommandQueue (instead of messageQueue)
+		this.nodeMap.get('A')?.vote('pizza');
+		this.nodeMap.get('B')?.vote('pizza');
+		this.nodeMap.get('C')?.vote('pizza');
+		this.nodeMap.get('D')?.vote('pizza');
+		this.nodeMap.get('E')?.vote('burger');
+		this.nodeMap.get('F')?.vote('burger');
 	}
 
-	setup(): void {
-		/*const federatedVoting = new FederatedVoting(
-			new StatementValidator(),
-			new MyEventBus(),
-			new AcceptHandler(new VBlockingNodesDetector(), new QuorumService()),
-			new ConfirmHandler(new QuorumService())
-		);*/
-
-		/**       B --- C
-		 *      /        \
-		 * A ---          ---D
-		 *      \        /
-		 *       E ---- F
-		 **/
-
-		const quorumSet = new QuorumSet(4, ['A', 'B', 'C', 'D', 'E', 'F'], []);
-
-		const [nodeA, federatedVoteA] = this.setupNode('A', quorumSet);
-		const [nodeB, federatedVoteB] = this.setupNode('B', quorumSet);
-		const [nodeC, federatedVoteC] = this.setupNode('C', quorumSet);
-		const [nodeD, federatedVoteD] = this.setupNode('D', quorumSet);
-		const [nodeE, federatedVoteE] = this.setupNode('E', quorumSet);
-		const [nodeF, federatedVoteF] = this.setupNode('F', quorumSet);
-
-		const overlay = new OverlayNetwork();
-		overlay.addNodes([
-			nodeA.publicKey,
-			nodeB.publicKey,
-			nodeC.publicKey,
-			nodeD.publicKey,
-			nodeE.publicKey,
-			nodeF.publicKey
-		]);
-
-		const connections = [
-			Connection.create('A', 'B'),
-			Connection.create('A', 'E'),
-			Connection.create('C', 'B'),
-			Connection.create('C', 'D'),
-			Connection.create('E', 'F'),
-			Connection.create('F', 'D')
-		];
-		overlay.addConnections(connections);
-
-		const voteA = federatedVoteA.voteForStatement('pizza');
-		const voteB = federatedVoteB.voteForStatement('pizza');
-		const voteC = federatedVoteC.voteForStatement('pizza');
-		const voteD = federatedVoteD.voteForStatement('pizza');
-		const voteE = federatedVoteE.voteForStatement('burger');
-		const voteF = federatedVoteF.voteForStatement('burger');
-
-		this.broadCastStates.add(this.broadCaster.initializeBroadcast('A', voteA));
-		this.broadCastStates.add(this.broadCaster.initializeBroadcast('B', voteB));
-		this.broadCastStates.add(this.broadCaster.initializeBroadcast('C', voteC));
-		this.broadCastStates.add(this.broadCaster.initializeBroadcast('D', voteD));
-		this.broadCastStates.add(this.broadCaster.initializeBroadcast('E', voteE));
-		this.broadCastStates.add(this.broadCaster.initializeBroadcast('F', voteF));
-
-		while (this.hasPendingBroadcast()) {
-			console.log('tick');
-			this.performBroadcastStep(overlay);
+	run(): void {
+		//this should work because everything is synchronous. Meaning event emits call the listening method directly
+		while (this.messageQueue.size > 0) {
+			this.processMessageQueue();
 		}
 	}
 
-	private hasPendingBroadcast() {
-		return Array.from(this.broadCastStates).some((state) =>
-			this.broadCaster.hasPendingBroadcast(state)
-		);
+	private setupNode(
+		publicKey: string,
+		quorumSet: BaseQuorumSet,
+		connections: PublicKey[]
+	): NodeOrchestrator {
+		const node = new NodeOrchestrator(publicKey, quorumSet);
+		connections.forEach((connection) => node.addConnection(connection));
+		node.on('send-message', this.handleSendMessageEvent.bind(this));
+		return node;
 	}
 
-	private performBroadcastStep(overlay: OverlayNetwork) {
-		const newBroadcastStates = new Set<GossipBroadcastState>();
-		Array.from(this.broadCastStates).forEach((state) => {
-			const result = this.broadCaster.performBroadcastStep(overlay, state);
-			newBroadcastStates.add(result.state);
-			result.connectionsUsed.forEach((connection) => {
-				console.log(
-					result.state.message +
-						' sent from ' +
-						connection[0] +
-						' to ' +
-						connection[1]
-				);
-			});
+	private handleSendMessageEvent(message: Message): void {
+		this.messageQueue.add(message);
+	}
+
+	private processMessageQueue(): void {
+		console.log(
+			'processing message queue with',
+			this.messageQueue.size,
+			'messages'
+		);
+		const messages = Array.from(this.messageQueue);
+		this.messageQueue.clear();
+		messages.forEach((message) => {
+			//find the node that is supposed to receive the message
+			//node.receiveMessage(message);
+			console.log('message', message.toString());
+			this.nodeMap.get(message.receiver)?.receiveMessage(message);
 		});
-		this.broadCastStates = newBroadcastStates;
 	}
 }
 
 const simulation = new Simulation();
 simulation.setup();
+simulation.run();

@@ -25,18 +25,23 @@ export class Node {
 	 *
 	 * A quorum is a set of nodes where every member has a slice in the quorum.
 	 */
-	public isQuorum(quorumCandidate: Map<PublicKey, QuorumSet>): boolean {
+	public isQuorum(
+		quorumCandidate: Map<PublicKey, QuorumSet>
+	): Map<PublicKey, QuorumSet> | null {
 		const originalQuorumCandidateSize = quorumCandidate.size;
 
 		if (originalQuorumCandidateSize === 0) {
-			return false;
+			return null;
 		}
 
 		quorumCandidate = this.removeMembersWithoutSlice(quorumCandidate);
 
 		if (originalQuorumCandidateSize === quorumCandidate.size) {
 			// the original quorumCandidate has not been shrunk down and is a quorum
-			return this.isThisNodePartOfQuorum(quorumCandidate);
+			if (this.isThisNodePartOfQuorum(quorumCandidate)) {
+				return quorumCandidate;
+			}
+			return null;
 		}
 
 		// Check if the shrunk down quorumCandidate is a quorum

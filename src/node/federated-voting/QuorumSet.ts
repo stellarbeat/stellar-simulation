@@ -1,4 +1,5 @@
 import { PublicKey } from '../..';
+import { BaseQuorumSet } from '../BaseQuorumSet';
 
 export class QuorumSet {
 	constructor(
@@ -40,7 +41,6 @@ export class QuorumSet {
 				}
 			}
 		}
-		console.log('leftUntillBlocked', leftUntillBlocked);
 
 		return false; //we can still reach the threshold!
 	}
@@ -52,5 +52,25 @@ export class QuorumSet {
 			quorumSet.threshold +
 			1
 		);
+	}
+
+	static fromBaseQuorumSet(baseQuorumSet: BaseQuorumSet): QuorumSet {
+		return new QuorumSet(
+			baseQuorumSet.threshold,
+			baseQuorumSet.validators,
+			baseQuorumSet.innerQuorumSets.map((innerSet) =>
+				QuorumSet.fromBaseQuorumSet(innerSet)
+			)
+		);
+	}
+
+	toBaseQuorumSet(): BaseQuorumSet {
+		return {
+			threshold: this.threshold,
+			validators: this.validators,
+			innerQuorumSets: this.innerQSets.map((innerSet) =>
+				innerSet.toBaseQuorumSet()
+			)
+		};
 	}
 }
