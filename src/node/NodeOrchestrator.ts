@@ -9,14 +9,21 @@ export class NodeOrchestrator extends EventEmitter {
 	private connections: Set<PublicKey> = new Set();
 	private federatedVote: FederatedVote;
 	private processedVotes: Set<Vote> = new Set();
+	private quorumSet: BaseQuorumSet;
 
 	constructor(public readonly publicKey: PublicKey, quorumSet: BaseQuorumSet) {
 		super();
+		this.quorumSet = quorumSet;
 		this.federatedVote = new FederatedVote(publicKey, quorumSet); //todo: inject?
 	}
 
 	updateQuorumSet(quorumSet: BaseQuorumSet): void {
-		this.federatedVote.updateQuorumSet(quorumSet);
+		this.quorumSet = quorumSet;
+		this.federatedVote.updateQuorumSet(this.quorumSet);
+	}
+
+	getQuorumSet(): BaseQuorumSet {
+		return this.quorumSet;
 	}
 
 	//todo: move to overlay class?
@@ -26,6 +33,10 @@ export class NodeOrchestrator extends EventEmitter {
 
 	removeConnection(connection: PublicKey): void {
 		this.connections.delete(connection);
+	}
+
+	getConnections(): PublicKey[] {
+		return Array.from(this.connections);
 	}
 
 	receiveMessage(message: Message): void {

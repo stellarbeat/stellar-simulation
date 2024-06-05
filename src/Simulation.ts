@@ -6,44 +6,74 @@ import { PublicKey } from '.';
 export class Simulation {
 	private messageQueue: Set<Message> = new Set();
 	private nodeMap: Map<PublicKey, NodeOrchestrator> = new Map();
+	private _isRunning = false;
 
-	/**       B --- C
-	 *      /        \
-	 * A ---          ---D
-	 *      \        /
-	 *       E ---- F
-	 **/
+	constructor() {
+		this.setup();
+	}
+
 	setup(): void {
 		//todo: take a json or something
 
 		const quorumSet: BaseQuorumSet = {
-			threshold: 4,
-			validators: ['A', 'B', 'C', 'D', 'E', 'F'],
+			threshold: 2,
+			validators: ['A', 'B', 'C'],
 			innerQuorumSets: []
 		};
 
-		this.nodeMap.set('A', this.setupNode('A', quorumSet, ['B', 'E']));
+		this.nodeMap.set('A', this.setupNode('A', quorumSet, ['B']));
 		this.nodeMap.set('B', this.setupNode('B', quorumSet, ['A', 'C']));
-		this.nodeMap.set('C', this.setupNode('C', quorumSet, ['B', 'D']));
-		this.nodeMap.set('D', this.setupNode('D', quorumSet, ['C', 'F']));
-		this.nodeMap.set('E', this.setupNode('E', quorumSet, ['A', 'F']));
-		this.nodeMap.set('F', this.setupNode('F', quorumSet, ['E', 'D']));
+		this.nodeMap.set('C', this.setupNode('C', quorumSet, ['B']));
+
+		//@todo: validation of the network connections => only known nodes
+	}
+
+	start(): void {
+		this._isRunning = true;
 
 		//todo: Commands: AddNode, RemoveNode, AddConnection, RemoveConnection, Vote, ReceiveMessage
 		//+ add them to the CommandQueue (instead of messageQueue)
 		this.nodeMap.get('A')?.vote('pizza');
 		this.nodeMap.get('B')?.vote('pizza');
-		this.nodeMap.get('C')?.vote('pizza');
-		this.nodeMap.get('D')?.vote('pizza');
-		this.nodeMap.get('E')?.vote('burger');
-		this.nodeMap.get('F')?.vote('burger');
+		this.nodeMap.get('C')?.vote('burger');
 	}
 
-	run(): void {
-		//this should work because everything is synchronous. Meaning event emits call the listening method directly
-		while (this.messageQueue.size > 0) {
+	next(): void {
+		if (this.messageQueue.size === 0) {
+			console.log(
+				'\nNothing to send or execute. Consensus could be reached or could be stuck. If possible, let a node vote on a statement. Or restart the simulation \n'
+			);
+		} else {
 			this.processMessageQueue();
 		}
+	}
+
+	get isRunning(): boolean {
+		return this._isRunning;
+	}
+
+	get nodes(): PublicKey[] {
+		return Array.from(this.nodeMap.keys());
+	}
+
+	get publicKeysWithQuorumSets(): {
+		publicKey: PublicKey;
+		quorumSet: BaseQuorumSet;
+	}[] {
+		return Array.from(this.nodeMap.entries()).map(([publicKey, node]) => ({
+			publicKey,
+			quorumSet: node.getQuorumSet()
+		}));
+	}
+
+	get nodesWithConnections(): {
+		publicKey: PublicKey;
+		connections: PublicKey[];
+	}[] {
+		return Array.from(this.nodeMap.entries()).map(([publicKey, node]) => ({
+			publicKey,
+			connections: node.getConnections()
+		}));
 	}
 
 	private setupNode(
@@ -77,7 +107,3 @@ export class Simulation {
 		});
 	}
 }
-
-const simulation = new Simulation();
-simulation.setup();
-simulation.run();

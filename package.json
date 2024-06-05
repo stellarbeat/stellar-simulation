@@ -3,7 +3,8 @@
 	"version": "0.0.1",
 	"scripts": {
 		"build": "tsc",
-		"test": "tsc && node --test ./lib/tests/*"
+		"test": "tsc && node --test ./lib/tests/*",
+		"start": "tsc && node ./lib/src/start-console.js"
 	},
 	"description": "",
 	"files": [
