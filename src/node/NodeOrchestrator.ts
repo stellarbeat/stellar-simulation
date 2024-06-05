@@ -61,4 +61,8 @@ export class NodeOrchestrator extends EventEmitter {
 		});
 		this.processedVotes.add(vote);
 	}
+
+	getFederatedVote(): FederatedVote {
+		return this.federatedVote;
+	}
 }

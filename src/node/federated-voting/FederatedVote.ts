@@ -112,6 +112,10 @@ export class FederatedVote {
 		this.node.updateQuorumSet(QuorumSet.fromBaseQuorumSet(quorumSet));
 	}
 
+	getNode(): Node {
+		return this.node;
+	}
+
 	private addVoteToAgreementAttempt(
 		agreementAttempt: AgreementAttempt,
 		vote: Vote

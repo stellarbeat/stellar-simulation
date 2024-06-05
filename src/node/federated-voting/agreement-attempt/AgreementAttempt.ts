@@ -35,6 +35,10 @@ export class AgreementAttempt {
 		return this.votesToAcceptStatement;
 	}
 
+	public getVotesForStatement(): Map<PublicKey, QuorumSet> {
+		return this.votesForStatement;
+	}
+
 	static create(node: Node, statement: Statement): AgreementAttempt {
 		return new this(node, statement);
 	}

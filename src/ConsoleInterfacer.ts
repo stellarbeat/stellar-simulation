@@ -139,7 +139,7 @@ export class ConsoleInterfacer {
 	}
 
 	private handleCommand(command: string): void {
-		const args = command.trim().toLowerCase().split(' ');
+		const args = command.trim().split(' ');
 		switch (args[0]) {
 			case 'start':
 				this.startSimulation();
@@ -159,6 +159,9 @@ export class ConsoleInterfacer {
 			case 'show-trust-connections':
 				this.showNodeTrustConnections();
 				break;
+			case 'inspect-node':
+				this.inspectNode(args[1], args.includes('--qset'));
+				break;
 			case 'exit':
 				console.log('Exiting simulation...');
 				this.rl.close();
@@ -167,6 +170,15 @@ export class ConsoleInterfacer {
 				console.log(
 					'Invalid command. Enter "list" to see available commands.\n'
 				);
+		}
+	}
+
+	private inspectNode(publicKey: string, includeQSet: boolean): void {
+		const nodeInfo = this.simulation.getNodeInfo(publicKey, includeQSet);
+		if (nodeInfo) {
+			console.log(JSON.stringify(nodeInfo, null, 2));
+		} else {
+			console.log(`Node with public key ${publicKey} not found.`);
 		}
 	}
 }

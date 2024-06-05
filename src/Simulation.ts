@@ -2,6 +2,8 @@ import { BaseQuorumSet } from './node/BaseQuorumSet';
 import { NodeOrchestrator } from './node/NodeOrchestrator';
 import { Message } from './node/Message';
 import { PublicKey } from '.';
+import { NodeDTO } from './api/NodeDTO';
+import { NodeDTOMapper } from './api/NodeDTOMapper';
 
 export class Simulation {
 	private messageQueue: Set<Message> = new Set();
@@ -54,6 +56,14 @@ export class Simulation {
 
 	get nodes(): PublicKey[] {
 		return Array.from(this.nodeMap.keys());
+	}
+
+	getNodeInfo(publicKey: PublicKey, includeQSet = false): NodeDTO | null {
+		const node = this.nodeMap.get(publicKey);
+		if (!node) {
+			return null;
+		}
+		return NodeDTOMapper.toDTO(node, includeQSet);
 	}
 
 	get publicKeysWithQuorumSets(): {
