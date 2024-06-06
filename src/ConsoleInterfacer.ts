@@ -75,30 +75,33 @@ export class ConsoleInterfacer {
 		console.log('*) list: Show available commands');
 		console.log('*) vote PublicKey Statement: Vote on a statement');
 		console.log(
-			'*) list-nodes --qsets: List all nodes in the simulation, optionally showing their quorum sets'
+			'*) nodes:list --qsets > List all nodes in the simulation, optionally showing their quorum sets'
 		);
 		console.log(
-			'*) inspect-node PublicKey --qset: show node information, optionally showing its quorum set'
+			'*) nodes:inspect PublicKey --qset > show node information, optionally showing its quorum set'
 		);
 		console.log(
-			'*) show-connections: Show all connections between nodes in an adjacency matrix'
+			'*) nodes:history PubliKey > show the output of the nodes previous step'
 		);
 		console.log(
-			'*) add-connection PublicKey PublicKey: Add a connection between two nodes'
+			'*) connection:list > List all connections between nodes in an adjacency matrix'
 		);
 		console.log(
-			'*) remove-connection PublicKey PublicKey: Remove a connection between two nodes'
+			'*) connections:add > PublicKey PublicKey: Add a connection between two nodes'
 		);
 		console.log(
-			'*) add-node PublicKey QuorumSet: Add a node with a given public key and quorum set'
+			'*) connections:remove PublicKey PublicKey > Remove a connection between two nodes'
 		);
 		console.log(
-			'*) remove-node PublicKey: Remove a node from the simulation (and its connections)'
+			'*) nodes:add PublicKey QuorumSet > Add a node with a given public key and quorum set'
 		);
 		console.log(
-			'*) show-trust-connections: Show all trust connections between nodes in an adjacency matrix'
+			'*) nodes:remove PublicKey > Remove a node from the simulation (and its connections)'
 		);
-		console.log('*) exit - Exit the simulation');
+		console.log(
+			'*) overlay:trust > Show all trust connections between nodes in an adjacency matrix'
+		);
+		console.log('*) q - Quit the simulation');
 	}
 
 	private startSimulation(): void {
@@ -150,19 +153,31 @@ export class ConsoleInterfacer {
 			case 'list':
 				this.showCommands();
 				break;
-			case 'list-nodes':
+			case 'nodes:list':
 				this.listNodes(args.includes('--qsets'));
 				break;
-			case 'show-connections':
+			case 'nl':
+				this.listNodes(args.includes('--qsets'));
+				break;
+			case 'connections:list':
 				this.showNodeConnections();
 				break;
-			case 'show-trust-connections':
+			case 'cl':
+				this.showNodeConnections();
+				break;
+			case 'overlay:trust':
 				this.showNodeTrustConnections();
 				break;
-			case 'inspect-node':
+			case 'ot':
+				this.showNodeTrustConnections();
+				break;
+			case 'nodes:inspect':
 				this.inspectNode(args[1], args.includes('--qset'));
 				break;
-			case 'exit':
+			case 'ni':
+				this.inspectNode(args[1], args.includes('--qset'));
+				break;
+			case 'q':
 				console.log('Exiting simulation...');
 				this.rl.close();
 				break;

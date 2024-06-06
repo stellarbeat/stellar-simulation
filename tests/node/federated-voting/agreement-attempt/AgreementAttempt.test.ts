@@ -56,7 +56,7 @@ describe('AgreementAttempt', () => {
 			assert.strictEqual(agreementAttempt.phase, 'accepted');
 		});
 
-		it('should fail if a no v-blocking set of nodes has accepted the statement and no quorum has ratified it', (test) => {
+		it('should fail if no v-blocking set of nodes has accepted the statement and no quorum has ratified it', (test) => {
 			const node = setupNode('A');
 			const agreementAttempt = AgreementAttempt.create(node, 'statement');
 
@@ -73,7 +73,7 @@ describe('AgreementAttempt', () => {
 			);
 			isSetVBlockingSpy.mock.mockImplementation(() => false);
 
-			test.mock.method(node, 'isQuorum').mock.mockImplementation(() => false);
+			test.mock.method(node, 'isQuorum').mock.mockImplementation(() => null);
 
 			assert.strictEqual(agreementAttempt.tryMoveToAcceptPhase(), false);
 			const spyCalls = isSetVBlockingSpy.mock.calls;
@@ -98,7 +98,7 @@ describe('AgreementAttempt', () => {
 				.mock.mockImplementation(() => false);
 
 			const containsQuorumForVSpy = test.mock.method(node, 'isQuorum');
-			containsQuorumForVSpy.mock.mockImplementation(() => true);
+			containsQuorumForVSpy.mock.mockImplementation(() => ['B', 'C']);
 
 			assert.strictEqual(agreementAttempt.tryMoveToAcceptPhase(), true);
 			const spyCalls = containsQuorumForVSpy.mock.calls;
@@ -119,7 +119,7 @@ describe('AgreementAttempt', () => {
 			const agreementAttempt = AgreementAttempt.create(node, 'statement');
 			agreementAttempt.phase = 'confirmed';
 			const isQuorumSpy = test.mock.method(node, 'isQuorum');
-			isQuorumSpy.mock.mockImplementation(() => true);
+			isQuorumSpy.mock.mockImplementation(() => ['A']);
 
 			assert.strictEqual(agreementAttempt.tryMoveToConfirmPhase(), false);
 			assert.strictEqual(agreementAttempt.phase, 'confirmed');
@@ -135,7 +135,7 @@ describe('AgreementAttempt', () => {
 			agreementAttempt.addVotedToAcceptStatement('C', quorumSetOfC);
 
 			const isQuorumSpy = test.mock.method(node, 'isQuorum');
-			isQuorumSpy.mock.mockImplementation(() => false);
+			isQuorumSpy.mock.mockImplementation(() => null);
 
 			assert.strictEqual(agreementAttempt.tryMoveToConfirmPhase(), false);
 			const calls = isQuorumSpy.mock.calls;

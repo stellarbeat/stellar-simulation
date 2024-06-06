@@ -67,7 +67,7 @@ export class FederatedVote {
 			);
 
 			this.processVote(myVote);
-			return vote; //ready to emit
+			return myVote; //ready to emit
 		}
 
 		if (agreementAttempt.tryMoveToConfirmPhase()) {

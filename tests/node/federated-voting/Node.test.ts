@@ -22,13 +22,18 @@ describe('Node', () => {
 
 		it('should be a quorum with V as member', () => {
 			const node = new Node('V', new QuorumSet(1, ['B'], []));
+			const quorumOrNull = node.isQuorum(quorumCandidate);
 
-			assert.strictEqual(node.isQuorum(quorumCandidate), true);
+			assert.notStrictEqual(quorumOrNull, null);
+			if (quorumOrNull === null) {
+				return;
+			}
+			assert.deepEqual(Array.from(quorumOrNull.keys()), ['A', 'B']);
 		});
 
 		it('should not be a quorum with V as member', () => {
 			const node = new Node('V', new QuorumSet(1, ['C'], []));
-			assert.strictEqual(node.isQuorum(quorumCandidate), false);
+			assert.strictEqual(node.isQuorum(quorumCandidate), null);
 		});
 
 		describe('quorumCandidate is not a quorum', () => {
@@ -41,7 +46,7 @@ describe('Node', () => {
 
 			it('should not be quorum with V as member', () => {
 				const node = new Node('V', new QuorumSet(1, ['B'], []));
-				assert.strictEqual(node.isQuorum(quorumCandidate), false);
+				assert.strictEqual(node.isQuorum(quorumCandidate), null);
 			});
 		});
 
@@ -56,12 +61,17 @@ describe('Node', () => {
 
 			it('is a quorum with V as a member', () => {
 				const node = new Node('V', new QuorumSet(2, ['B', 'C', 'A'], []));
-				assert.strictEqual(node.isQuorum(quorumCandidate), true);
+				const quorumOrNull = node.isQuorum(quorumCandidate);
+				assert.notStrictEqual(quorumOrNull, null);
+				if (quorumOrNull === null) {
+					return;
+				}
+				assert.deepEqual(Array.from(quorumOrNull.keys()), ['A', 'B', 'C', 'D']);
 			});
 
 			it('is not a quorum with V as a member', () => {
 				const node = new Node('V', new QuorumSet(2, ['BB', 'CC', 'AA'], []));
-				assert.strictEqual(node.isQuorum(quorumCandidate), false);
+				assert.strictEqual(node.isQuorum(quorumCandidate), null);
 			});
 		});
 	});

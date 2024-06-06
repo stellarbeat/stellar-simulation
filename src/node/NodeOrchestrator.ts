@@ -41,6 +41,7 @@ export class NodeOrchestrator extends EventEmitter {
 
 	receiveMessage(message: Message): void {
 		const newVoteOrNull = this.federatedVote.processVote(message.vote);
+		console.log(newVoteOrNull);
 		if (newVoteOrNull) this.broadcast(newVoteOrNull);
 
 		this.broadcast(message.vote); //pass on the message
