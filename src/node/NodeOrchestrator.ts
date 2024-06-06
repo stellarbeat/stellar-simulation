@@ -1,5 +1,5 @@
 import EventEmitter from 'events';
-import { PublicKey } from '..';
+import { PublicKey, Statement } from '..';
 import { FederatedVote } from './federated-voting/FederatedVote';
 import { BaseQuorumSet } from './BaseQuorumSet';
 import { Vote } from './federated-voting/Vote';
@@ -11,10 +11,15 @@ export class NodeOrchestrator extends EventEmitter {
 	private processedVotes: Set<Vote> = new Set();
 	private quorumSet: BaseQuorumSet;
 
-	constructor(public readonly publicKey: PublicKey, quorumSet: BaseQuorumSet) {
+	constructor(
+		public readonly publicKey: PublicKey,
+		quorumSet: BaseQuorumSet,
+		connections: PublicKey[] = []
+	) {
 		super();
 		this.quorumSet = quorumSet;
 		this.federatedVote = new FederatedVote(publicKey, quorumSet); //todo: inject?
+		connections.forEach((connection) => this.addConnection(connection));
 	}
 
 	updateQuorumSet(quorumSet: BaseQuorumSet): void {
@@ -47,7 +52,7 @@ export class NodeOrchestrator extends EventEmitter {
 		this.broadcast(message.vote); //pass on the message
 	}
 
-	vote(statement: string): void {
+	vote(statement: Statement): void {
 		const voteOrNull = this.federatedVote.voteForStatement(statement);
 		if (voteOrNull) {
 			this.broadcast(voteOrNull);

@@ -1,33 +1,28 @@
 import * as readline from 'readline';
-import { Simulation } from './Simulation';
+import { SimulationPlayer } from '../simulation/SimulationPlayer';
 import { ConsoleAdjacencyMatrixVisualization } from './ConsoleAdjacencyMatrixVisualizer';
-import { BaseQuorumSet } from './node/BaseQuorumSet';
+import { BaseQuorumSet } from '../node/BaseQuorumSet';
 
 export class ConsoleInterfacer {
 	private rl: readline.Interface;
-	private simulation: Simulation;
+	private simulationPlayer: SimulationPlayer;
 
 	constructor(
 		private consoleAdjacencyMatrixVisualizer: ConsoleAdjacencyMatrixVisualization
 	) {
-		//todo: take a json with the scenario or initioal network config
-		this.simulation = new Simulation();
+		this.simulationPlayer = new SimulationPlayer();
+
 		this.rl = readline.createInterface({
 			input: process.stdin,
 			output: process.stdout
 		});
 
 		console.log('Welcome to the Stellar Federated Voting Protocol simulation.');
-		console.log('-----------------------------------------------------');
-		console.log('The nodes in the network are:');
-		this.listNodes(false);
-		console.log('The node connections are:');
-		this.showNodeConnections();
-		console.log('The node trust connections are:');
-		this.showNodeTrustConnections();
+		console.log('------------------------------------------------------------');
+
 		this.showCommands();
 		console.log(''); // empty line
-		this.rl.setPrompt('Enter command: ');
+		this.rl.setPrompt('Enter command: \n> ');
 		this.rl.prompt();
 
 		this.rl
@@ -43,12 +38,12 @@ export class ConsoleInterfacer {
 
 	private showNodeConnections(): void {
 		this.consoleAdjacencyMatrixVisualizer.visualize(
-			this.simulation.nodesWithConnections
+			this.simulationPlayer.nodesWithConnections
 		);
 	}
 
 	private showNodeTrustConnections(): void {
-		const nodesWithQuorumSets = this.simulation.publicKeysWithQuorumSets;
+		const nodesWithQuorumSets = this.simulationPlayer.publicKeysWithQuorumSets;
 		const getQuorumSetMembers: (quorumSet: BaseQuorumSet) => string[] = (
 			quorumSet: BaseQuorumSet
 		) => {
@@ -70,7 +65,7 @@ export class ConsoleInterfacer {
 	private showCommands(): void {
 		console.log(''); // empty line
 		console.log('-- Available commands --');
-		console.log('*) start: Start the simulation');
+		console.log('*) start: Start the simulation with a default scenario');
 		console.log('*) next: Proceed to the next step');
 		console.log('*) list: Show available commands');
 		console.log('*) vote PublicKey Statement: Vote on a statement');
@@ -81,7 +76,7 @@ export class ConsoleInterfacer {
 			'*) nodes:inspect PublicKey --qset > show node information, optionally showing its quorum set'
 		);
 		console.log(
-			'*) nodes:history PubliKey > show the output of the nodes previous step'
+			'*) nodes:history PubliKey > show the output of the specified node previous step'
 		);
 		console.log(
 			'*) connection:list > List all connections between nodes in an adjacency matrix'
@@ -101,44 +96,45 @@ export class ConsoleInterfacer {
 		console.log(
 			'*) overlay:trust > Show all trust connections between nodes in an adjacency matrix'
 		);
+		console.log(
+			'*) simulation:undo > Undo the last step in the simulation (if possible)'
+		);
+		console.log(
+			'*) simulation:commands > Show the commands that will be executed in the next step'
+		);
+
 		console.log('*) q - Quit the simulation');
 	}
 
 	private startSimulation(): void {
-		if (!this.simulation.isRunning) {
-			this.simulation.start();
-			console.log(
-				"\n-- Enter 'next' to proceed to the next step in the simulation -- \n"
-			);
-		} else {
-			console.log('\n-- Simulation is already running.\n');
-		}
+		console.log('\n-- Starting default scenario --\n');
+		this.simulationPlayer.start();
+		console.log('The nodes in the network are:');
+		this.listNodes(false);
+		console.log('The node connections are:');
+		this.showNodeConnections();
+		console.log('The node trust connections are:');
+		this.showNodeTrustConnections();
+		console.log(
+			'Added commands: \n' + this.simulationPlayer.getNextCommandsInfo()
+		);
+
+		console.log("\n-- Enter 'next' to start federated consensus -- \n");
 	}
 
 	private nextStep(): void {
-		if (this.simulation.isRunning) {
-			this.simulation.next();
-			if (this.simulation.isRunning) {
-				console.log(
-					"\n-- Enter 'next' to proceed to the next step in the simulation -- \n"
-				);
-			}
-		} else {
-			console.log(
-				'\n-- Simulation is not running. Start the simulation with "start".\n'
-			);
-		}
+		this.simulationPlayer.next();
 	}
 
 	private listNodes(showQSets: boolean): void {
 		if (showQSets) {
 			this.listNodesWithQuorumSets();
 		}
-		console.log(this.simulation.nodes);
+		console.log(this.simulationPlayer.nodes);
 	}
 
 	private listNodesWithQuorumSets(): void {
-		console.log(this.simulation.publicKeysWithQuorumSets);
+		console.log(this.simulationPlayer.publicKeysWithQuorumSets);
 	}
 
 	private handleCommand(command: string): void {
@@ -177,6 +173,18 @@ export class ConsoleInterfacer {
 			case 'ni':
 				this.inspectNode(args[1], args.includes('--qset'));
 				break;
+			case 'simulation:undo':
+				this.simulationPlayer.undoLastStep();
+				break;
+			case 'su':
+				this.simulationPlayer.undoLastStep();
+				break;
+			case 'simulation:commands':
+				console.log(this.simulationPlayer.getNextCommandsInfo());
+				break;
+			case 'sc':
+				console.log(this.simulationPlayer.getNextCommandsInfo());
+				break;
 			case 'q':
 				console.log('Exiting simulation...');
 				this.rl.close();
@@ -189,7 +197,7 @@ export class ConsoleInterfacer {
 	}
 
 	private inspectNode(publicKey: string, includeQSet: boolean): void {
-		const nodeInfo = this.simulation.getNodeInfo(publicKey, includeQSet);
+		const nodeInfo = this.simulationPlayer.getNodeInfo(publicKey, includeQSet);
 		if (nodeInfo) {
 			console.log(JSON.stringify(nodeInfo, null, 2));
 		} else {

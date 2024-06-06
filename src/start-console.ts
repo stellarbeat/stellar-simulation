@@ -1,4 +1,4 @@
-import { ConsoleAdjacencyMatrixVisualization } from './ConsoleAdjacencyMatrixVisualizer';
-import { ConsoleInterfacer } from './ConsoleInterfacer';
+import { ConsoleAdjacencyMatrixVisualization } from './console-interface/ConsoleAdjacencyMatrixVisualizer';
+import { ConsoleInterfacer } from './console-interface/ConsoleInterfacer';
 
 new ConsoleInterfacer(new ConsoleAdjacencyMatrixVisualization());
