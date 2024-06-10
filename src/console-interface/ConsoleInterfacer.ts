@@ -66,7 +66,7 @@ export class ConsoleInterfacer {
 		console.log(''); // empty line
 		console.log('-- Available commands --');
 		console.log('*) start: Start the simulation with a default scenario');
-		console.log('*) next: Proceed to the next step');
+		console.log('*) next: Proceed to the next step in the simulation');
 		console.log('*) list: Show available commands');
 		console.log('*) vote PublicKey Statement: Vote on a statement');
 		console.log(
@@ -76,7 +76,13 @@ export class ConsoleInterfacer {
 			'*) nodes:inspect PublicKey --qset > show node information, optionally showing its quorum set'
 		);
 		console.log(
-			'*) nodes:history PubliKey > show the output of the specified node previous step'
+			'*) nodes:inspect:slices PublicKey > show the quorum slices of the specified node'
+		);
+		console.log(
+			'*) nodes:inspect:v-blocking-sets PublicKey > show the possible VBlockingSets of the specified node'
+		);
+		console.log(
+			'*) nodes:history PublicKey > show the output of the specified node previous step'
 		);
 		console.log(
 			'*) connection:list > List all connections between nodes in an adjacency matrix'
@@ -97,10 +103,17 @@ export class ConsoleInterfacer {
 			'*) overlay:trust > Show all trust connections between nodes in an adjacency matrix'
 		);
 		console.log(
-			'*) simulation:undo > Undo the last step in the simulation (if possible)'
+			'*) simulation:back > Go back to the previous step in the simulation'
 		);
+		console.log('*) simulation:next > Go to the next step in the simulation');
 		console.log(
 			'*) simulation:commands > Show the commands that will be executed in the next step'
+		);
+		console.log(
+			'*) simulation:scenario:export > Export the current simulation scenario'
+		);
+		console.log(
+			'*) simulation:step number > Go to a specific step in the simulation'
 		);
 
 		console.log('*) q - Quit the simulation');
