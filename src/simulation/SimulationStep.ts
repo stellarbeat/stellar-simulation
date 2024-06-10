@@ -8,12 +8,18 @@ export class SimulationStep {
 	constructor(public readonly id: number) {}
 
 	addCommand(command: Command): void {
+		console.log(
+			`Adding command: ${command.toString()} to simulation step ${this.id}`
+		);
 		this.commands.push(command);
 	}
 
 	execute(simulation: Simulation): void {
-		console.log(`--- Executing step ${this.id} ---\n`);
-		this.commands.forEach((command) => command.execute(simulation));
+		console.log(`\n--- Executing step ${this.id} ---\n`);
+		this.commands.forEach((command) => {
+			console.log(`Executing command: ${command.toString()}`);
+			command.execute(simulation);
+		});
 	}
 
 	hasCommands(): boolean {

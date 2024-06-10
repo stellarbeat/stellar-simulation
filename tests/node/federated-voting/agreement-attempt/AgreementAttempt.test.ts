@@ -1,7 +1,10 @@
 import { describe, it } from 'node:test';
 import { Node } from '../../../../src';
 import assert from 'node:assert';
-import { AgreementAttempt } from '../../../../src/node/federated-voting/agreement-attempt/AgreementAttempt';
+import {
+	AgreementAttempt,
+	AgreementAttemptPhase
+} from '../../../../src/node/federated-voting/agreement-attempt/AgreementAttempt';
 import { QuorumSet } from '../../../../src/node/federated-voting/QuorumSet';
 
 describe('AgreementAttempt', () => {
@@ -20,11 +23,11 @@ describe('AgreementAttempt', () => {
 
 			isSetVBlockingSpy.mock.mockImplementation(() => true);
 
-			agreementAttempt.phase = 'accepted';
+			agreementAttempt.phase = AgreementAttemptPhase.accepted;
 
 			assert.strictEqual(agreementAttempt.tryMoveToAcceptPhase(), false);
 
-			agreementAttempt.phase = 'confirmed';
+			agreementAttempt.phase = AgreementAttemptPhase.confirmed;
 			assert.strictEqual(agreementAttempt.tryMoveToAcceptPhase(), false);
 		});
 
@@ -117,7 +120,7 @@ describe('AgreementAttempt', () => {
 		it('should fail if agreement attempt is already in confirmed phase', (test) => {
 			const node = setupNode('A');
 			const agreementAttempt = AgreementAttempt.create(node, 'statement');
-			agreementAttempt.phase = 'confirmed';
+			agreementAttempt.phase = AgreementAttemptPhase.confirmed;
 			const isQuorumSpy = test.mock.method(node, 'isQuorum');
 			isQuorumSpy.mock.mockImplementation(() => ['A']);
 

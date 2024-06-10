@@ -1,22 +1,34 @@
 import { Statement } from '../../Statement';
 import { Node, PublicKey } from '../../..';
 import { QuorumSet } from '../QuorumSet';
+import { EventCollector } from '../../../core/domain/EventCollector';
+import { AgreementAttemptInAcceptPhase } from './event/AgreementAttemptInAcceptPhase';
+import { RatifiedVote } from './event/RatifiedVote';
+import { RatifiedAcceptVote } from './event/RatifiedAcceptVote';
+import { AcceptVBlocked } from './event/AcceptVBlocked';
 
+export enum AgreementAttemptPhase {
+	unknown = 'unknown',
+	accepted = 'accepted',
+	confirmed = 'confirmed'
+}
 /*
  * An attempt on agreement by a specific node on a specific statement.
  */
-export class AgreementAttempt {
+export class AgreementAttempt extends EventCollector {
 	// a node could change its quorumSet, so we need to keep track of the quorumSet of the votes
 	private votesForStatement: Map<PublicKey, QuorumSet> = new Map(); //the peers that voted for this statement
 	private votesToAcceptStatement: Map<PublicKey, QuorumSet> = new Map(); //the peers that accepted this statement
 
-	public phase: 'unknown' | 'accepted' | 'confirmed' = 'unknown'; //where we are in this round of federated voting for this node
+	public phase = AgreementAttemptPhase.unknown; //where we are in this round of federated voting for this node
 	public votedFor = false; //if the node voted for this statement
 
 	private constructor(
 		public readonly node: Node,
 		public readonly statement: Statement
-	) {}
+	) {
+		super();
+	}
 
 	addVotedForStatement(publicKey: PublicKey, quorumSet: QuorumSet): void {
 		this.votesForStatement.set(publicKey, quorumSet);
@@ -35,6 +47,10 @@ export class AgreementAttempt {
 		return this.votesToAcceptStatement;
 	}
 
+	public getAcceptVoters(): PublicKey[] {
+		return Array.from(this.votesToAcceptStatement.keys());
+	}
+
 	public getVotesForStatement(): Map<PublicKey, QuorumSet> {
 		return this.votesForStatement;
 	}
@@ -49,15 +65,34 @@ export class AgreementAttempt {
 		}
 
 		if (this.areAcceptingNodesVBlocking()) {
-			console.log(
-				'${this.node.publicKey}] vote(accept(${this.statement})) from ${Array.from(this.getAcceptVotes.keys)} are v-blocking'
+			this.registerEvent(
+				new AcceptVBlocked(
+					this.node.publicKey,
+					this.phase,
+					this.statement,
+					new Set(Array.from(this.getAcceptVotes().keys()))
+				)
 			);
-			this.phase = 'accepted';
+			this.phase = AgreementAttemptPhase.accepted;
+			this.registerEvent(
+				new AgreementAttemptInAcceptPhase(
+					this.node.publicKey,
+					this.phase,
+					this.statement
+				)
+			);
 			return true;
 		}
 
 		if (this.isVoteRatified()) {
-			this.phase = 'accepted';
+			this.phase = AgreementAttemptPhase.accepted;
+			this.registerEvent(
+				new AgreementAttemptInAcceptPhase(
+					this.node.publicKey,
+					this.phase,
+					this.statement
+				)
+			);
 			return true;
 		}
 
@@ -70,7 +105,14 @@ export class AgreementAttempt {
 		}
 
 		if (this.isAcceptVoteRatified()) {
-			this.phase = 'confirmed';
+			this.phase = AgreementAttemptPhase.confirmed;
+			this.registerEvent(
+				new AgreementAttemptInAcceptPhase(
+					this.node.publicKey,
+					this.phase,
+					this.statement
+				)
+			);
 			return true;
 		}
 
@@ -86,8 +128,8 @@ export class AgreementAttempt {
 	private isVoteRatified(): boolean {
 		const quorumOrNull = this.node.isQuorum(this.getAllVotes());
 		if (quorumOrNull !== null) {
-			console.log(
-				`${this.node.publicKey}] vote(${this.statement}) is a quorum: ${quorumOrNull.keys}`
+			this.registerEvent(
+				new RatifiedVote(this.node.publicKey, this.statement, quorumOrNull)
 			);
 		}
 		return quorumOrNull !== null;
@@ -96,11 +138,19 @@ export class AgreementAttempt {
 	private isAcceptVoteRatified(): boolean {
 		const quorumOrNull = this.node.isQuorum(this.getAcceptVotes());
 		if (quorumOrNull !== null) {
-			console.log(
-				`${this.node.publicKey}] vote(accept(${this.statement})) is a quorum: ${quorumOrNull.keys}`
+			this.registerEvent(
+				new RatifiedAcceptVote(
+					this.node.publicKey,
+					this.statement,
+					quorumOrNull
+				)
 			);
 		}
 
 		return quorumOrNull !== null;
+	}
+
+	toString(): string {
+		return `Agreement attempt on statement '${this.statement}' in phase '${this.phase}' by node '${this.node.publicKey}'`;
 	}
 }

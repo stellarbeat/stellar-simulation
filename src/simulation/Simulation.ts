@@ -1,9 +1,12 @@
+import assert from 'assert';
 import { PublicKey, Statement } from '..';
 import { NodeDTO } from '../api/NodeDTO';
 import { NodeDTOMapper } from '../api/NodeDTOMapper';
 import { BaseQuorumSet } from '../node/BaseQuorumSet';
 import { Message } from '../node/Message';
 import { NodeOrchestrator } from '../node/NodeOrchestrator';
+import { MessageSent } from '../node/event/MessageSent';
+import { ProtocolEvent } from '../node/ProtocolEvent';
 
 //todo: is this the correct name?
 export class Simulation {
@@ -22,8 +25,6 @@ export class Simulation {
 		}
 		const node = new NodeOrchestrator(publicKey, quorumSet, connections);
 		this.nodeMap.set(publicKey, node);
-
-		node.on('send-message', this.handleSendMessageEvent.bind(this));
 	}
 
 	vote(publicKey: PublicKey, statement: Statement): void {
@@ -33,6 +34,17 @@ export class Simulation {
 			return;
 		}
 		node.vote(statement);
+		const events = node.drainEvents();
+
+		events.forEach((event) => {
+			if (event instanceof ProtocolEvent) {
+				console.log(`[fed-vot][${node.publicKey}]${event.toString()}`);
+			}
+			if (event instanceof MessageSent) {
+				console.log(`[overlay] ${event.toString()}`);
+				this.handleMessageSentEvent(event.message);
+			}
+		});
 	}
 
 	hasMessages(): boolean {
@@ -44,13 +56,25 @@ export class Simulation {
 		this.messageQueue.clear();
 	}
 
-	sendMessagesInOutbox(): void {
-		console.log('Sending ', this.outbox.size, 'messages');
+	deliverMessagesInOutbox(): void {
 		const messages = Array.from(this.outbox);
 		this.outbox.clear();
 		messages.forEach((message) => {
-			console.log('message', message.toString());
-			this.nodeMap.get(message.receiver)?.receiveMessage(message);
+			const node = this.nodeMap.get(message.receiver);
+			assert(node instanceof NodeOrchestrator);
+
+			console.log(`[simulation] Deliver message: ${message}`);
+			node.receiveMessage(message);
+			const events = node.drainEvents();
+			events.forEach((event) => {
+				if (event instanceof ProtocolEvent) {
+					console.log(`[fed-vot][${node.publicKey}]${event.toString()}`);
+				}
+				if (event instanceof MessageSent) {
+					console.log(`[overlay] ${event.toString()}`);
+					this.handleMessageSentEvent(event.message);
+				}
+			});
 		});
 	}
 
@@ -86,10 +110,10 @@ export class Simulation {
 		}));
 	}
 
-	private processMessageQueue(): void {}
-
-	private handleSendMessageEvent(message: Message): void {
-		console.log('received send-message event', message.toString());
+	private handleMessageSentEvent(message: Message): void {
+		console.log(
+			`[simulation] Queued message from ${message.sender} to ${message.receiver}`
+		);
 		this.messageQueue.add(message);
 	}
 }

@@ -1,14 +1,15 @@
 import { describe, it } from 'node:test';
 import { FederatedVote } from '../../../src/node/federated-voting/FederatedVote';
-import { Node } from '../../../src';
-import { QuorumSet } from '../../../src/node/federated-voting/QuorumSet';
 import assert from 'node:assert';
 import { Vote } from '../../../src/node/federated-voting/Vote';
 import { BaseQuorumSet } from '../../../src/node/BaseQuorumSet';
+import { Voted } from '../../../src/node/federated-voting/event/Voted';
+import { AddedVoteToAgreementattempt } from '../../../src/node/federated-voting/agreement-attempt/event/AddedVoteToAgreementAttempt';
+import { AgreementAttemptCreated } from '../../../src/node/federated-voting/event/AgreementAttemptCreated';
 
 describe('FederatedVote', () => {
 	describe('voteForStatement', () => {
-		it('should return null if the node has already voted for a statement', () => {
+		it('should do nothing if the node has already voted for a statement', () => {
 			const federatedVote = new FederatedVote('V', {
 				threshold: 1,
 				validators: ['Q'],
@@ -17,11 +18,12 @@ describe('FederatedVote', () => {
 
 			const statement = 'statement';
 			federatedVote.voteForStatement(statement);
-			const secondVote = federatedVote.voteForStatement(statement);
-			assert.strictEqual(secondVote, null);
+			federatedVote.drainEvents();
+			federatedVote.voteForStatement(statement);
+			assert.ok(federatedVote.drainEvents().length === 0);
 		});
 
-		it('should start an agreement attempt and return a vote for the statement', () => {
+		it('should vote and start a new agreement attempt', () => {
 			const quorumSet: BaseQuorumSet = {
 				threshold: 1,
 				validators: ['OTHER'],
@@ -30,13 +32,30 @@ describe('FederatedVote', () => {
 			const federatedVote = new FederatedVote('V', quorumSet);
 
 			const statement = 'statement';
-			const vote = federatedVote.voteForStatement(statement);
-			assert.notStrictEqual(vote, null);
+
+			federatedVote.voteForStatement(statement);
+			const events = federatedVote.drainEvents();
+			assert.strictEqual(events.length, 3);
+
+			const votedEvent = events[0];
+			assert.ok(votedEvent instanceof Voted);
+			const vote = votedEvent.vote;
 			assert.strictEqual(vote?.statement, statement);
 			assert.strictEqual(vote?.accept, false);
 			assert.strictEqual(vote.publicKey, 'V');
 			assert.deepStrictEqual(vote.quorumSet, quorumSet);
 			assert.strictEqual(federatedVote.nodeHasVotedForAStatement(), true);
+
+			const agreementAttemptCreatedEvent = events[1];
+			assert.ok(
+				agreementAttemptCreatedEvent instanceof AgreementAttemptCreated
+			);
+
+			const voteAddedToAgreementAttemptEvent = events[2];
+			assert.ok(
+				voteAddedToAgreementAttemptEvent instanceof AddedVoteToAgreementattempt
+			);
+			assert.strictEqual(voteAddedToAgreementAttemptEvent.statement, statement);
 
 			const agreementAttempts = federatedVote.getAgreementAttempts();
 			assert.strictEqual(agreementAttempts.length, 1);
@@ -100,7 +119,14 @@ describe('FederatedVote', () => {
 					quorumSet
 				);
 
-				const voteForAccept = federatedVote.processVote(voteThatTriggersAccept);
+				federatedVote.processVote(voteThatTriggersAccept);
+				const events = federatedVote.drainEvents();
+				assert.strictEqual(events.length, 7);
+
+				const votedEvent = events.find((event) => event instanceof Voted);
+				assert.ok(votedEvent instanceof Voted);
+				const voteForAccept = votedEvent.vote;
+
 				assert.notStrictEqual(voteForAccept, null);
 				assert.strictEqual(voteForAccept?.accept, true);
 

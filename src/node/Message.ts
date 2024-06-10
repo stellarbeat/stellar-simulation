@@ -9,6 +9,6 @@ export class Message {
 	) {}
 
 	toString(): string {
-		return `${this.sender} -> ${this.receiver}: ${this.vote.toString()}`;
+		return `From: ${this.sender.toString()}, To: ${this.receiver.toString()}, Vote: ${this.vote.toString()}`;
 	}
 }

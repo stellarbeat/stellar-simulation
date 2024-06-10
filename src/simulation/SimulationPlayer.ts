@@ -77,7 +77,7 @@ export class SimulationPlayer {
 		//allow to capture new messages for the next step
 		this.simulation.moveMessagesToOutbox();
 		this.executeCurrentStep();
-		this.simulation.sendMessagesInOutbox();
+		this.simulation.deliverMessagesInOutbox();
 	}
 
 	private executeCurrentStep(): void {

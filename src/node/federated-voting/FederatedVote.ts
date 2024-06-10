@@ -6,21 +6,30 @@ import { AgreementAttempt } from './agreement-attempt/AgreementAttempt';
 import { BaseQuorumSet } from '../BaseQuorumSet';
 import { QuorumSet } from './QuorumSet';
 import { PublicKey } from '../..';
+import { AgreementAttemptCreated } from './event/AgreementAttemptCreated';
+import { Voted } from './event/Voted';
+import { RegisteredVote } from './event/RegisteredVote';
+import { ProcessedVote } from './event/ProcessedVote';
+import { ConsensusReached } from './event/ConsensusReached';
+import { EventCollector } from '../../core/domain/EventCollector';
+import { AddedVoteToAgreementattempt } from './agreement-attempt/event/AddedVoteToAgreementAttempt';
 
-export class FederatedVote {
+export class FederatedVote extends EventCollector {
 	private agreementAttempts: AgreementAttemptCollection =
 		new AgreementAttemptCollection();
 	private _nodeHasVotedForAStatement = false;
 	private consensus: Statement | null = null;
 	private node: Node;
+	private registeredVotes: Set<Vote> = new Set();
 
 	constructor(publicKey: PublicKey, quorumSet: BaseQuorumSet) {
+		super();
 		this.node = new Node(publicKey, QuorumSet.fromBaseQuorumSet(quorumSet));
 	}
 
 	//vote(statement)
-	voteForStatement(statement: Statement): Vote | null {
-		if (this._nodeHasVotedForAStatement) return null;
+	voteForStatement(statement: Statement): void {
+		if (this._nodeHasVotedForAStatement) return;
 
 		const vote = new Vote(
 			statement,
@@ -29,71 +38,64 @@ export class FederatedVote {
 			this.node.quorumSet.toBaseQuorumSet()
 		);
 		this._nodeHasVotedForAStatement = true;
-		console.log(`Node ${this.node.publicKey}] vote(${statement})`);
+		this.registerEvent(new Voted(vote));
 
 		this.processVote(vote);
+	}
 
-		return vote; // ready to emit to network
+	//vote(accept(statement))
+	private voteToAcceptStatement(statement: Statement) {
+		const vote = new Vote(
+			statement,
+			true,
+			this.node.publicKey,
+			this.node.quorumSet.toBaseQuorumSet()
+		);
+		this.registerEvent(new Voted(vote));
+		this.processVote(vote);
+	}
+
+	processVote(vote: Vote): void {
+		if (this.registeredVotes.has(vote)) return; //because we are doing everything in memory, this check suffices and we don't need hashes
+		this.registerVote(vote);
+
+		let agreementAttempt = this.agreementAttempts.get(vote.statement);
+		if (!agreementAttempt) {
+			agreementAttempt = this.createAgreementAttempt(vote.statement);
+		}
+
+		this.addVoteToAgreementAttempt(agreementAttempt, vote);
+
+		if (agreementAttempt.tryMoveToAcceptPhase()) {
+			this.registerEvents(agreementAttempt.drainEvents());
+			this.voteToAcceptStatement(agreementAttempt.statement);
+		}
+
+		if (agreementAttempt.tryMoveToConfirmPhase()) {
+			this.registerEvents(agreementAttempt.drainEvents());
+
+			this.consensus = agreementAttempt.statement;
+			this.registerEvent(new ConsensusReached(agreementAttempt.statement));
+		}
+
+		//this.registerEvent(new ProcessedVote(vote));
 	}
 
 	nodeHasVotedForAStatement(): boolean {
 		return this._nodeHasVotedForAStatement;
 	}
 
-	processVote(vote: Vote): Vote | null {
-		console.log(`${this.node.publicKey}] process ${vote}`);
-		let agreementAttempt = this.agreementAttempts.get(vote.statement);
-		if (!agreementAttempt) {
-			console.log(
-				`${this.node.publicKey}] New agreement attempt for statement ${vote.statement}`
-			);
-			agreementAttempt = AgreementAttempt.create(this.node, vote.statement);
-			this.agreementAttempts.add(agreementAttempt);
-		}
+	private createAgreementAttempt(statement: Statement): AgreementAttempt {
+		const agreementAttempt = AgreementAttempt.create(this.node, statement);
+		this.agreementAttempts.add(agreementAttempt);
+		this.registerEvent(new AgreementAttemptCreated(agreementAttempt));
 
-		//todo: check if the vote is already processed
-		console.log(
-			`${this.node.publicKey}] add ${vote} to agreement attempt for statement ${vote.statement}`
-		);
-		this.addVoteToAgreementAttempt(agreementAttempt, vote);
-
-		if (agreementAttempt.tryMoveToAcceptPhase()) {
-			console.log(
-				`${this.node.publicKey}] moved agreement on statement ${vote.statement} to accept phase`
-			);
-
-			const myVote = this.createVoteForAcceptStatement(
-				agreementAttempt.statement
-			);
-
-			this.processVote(myVote);
-			return myVote; //ready to emit
-		}
-
-		if (agreementAttempt.tryMoveToConfirmPhase()) {
-			console.log(
-				`${this.node.publicKey}] moved agreement on statement ${vote.statement} to confirm phase`
-			);
-			//todo: emit event upon split consensus detected? this could happen if there is no quorum intersection in the network
-			this.consensus = agreementAttempt.statement;
-			console.log(
-				`${this.node.publicKey}] consensus reached on statement ${vote.statement}`
-			);
-			return null;
-		}
-
-		return null;
+		return agreementAttempt;
 	}
 
-	//only the protocol can vote(accept(statement))
-	private createVoteForAcceptStatement(statement: Statement) {
-		console.log(`${this.node.publicKey}] vote(accept(${statement}))`);
-		return new Vote(
-			statement,
-			true,
-			this.node.publicKey,
-			this.node.quorumSet.toBaseQuorumSet()
-		);
+	private registerVote(vote: Vote) {
+		this.registeredVotes.add(vote);
+		//this.registerEvent(new RegisteredVote(vote));
 	}
 
 	getConsensus(): Statement | null {
@@ -130,5 +132,15 @@ export class FederatedVote {
 				vote.publicKey,
 				QuorumSet.fromBaseQuorumSet(vote.quorumSet)
 			);
+
+		//todo: move to AgreementAttempt
+		this.registerEvent(
+			new AddedVoteToAgreementattempt(
+				agreementAttempt.node.publicKey,
+				agreementAttempt.statement,
+				vote,
+				agreementAttempt.phase
+			)
+		);
 	}
 }

@@ -1,11 +1,13 @@
-import EventEmitter from 'events';
 import { PublicKey, Statement } from '..';
 import { FederatedVote } from './federated-voting/FederatedVote';
 import { BaseQuorumSet } from './BaseQuorumSet';
 import { Vote } from './federated-voting/Vote';
 import { Message } from './Message';
+import { EventCollector } from '../core/domain/EventCollector';
+import { Voted } from './federated-voting/event/Voted';
+import { MessageSent } from './event/MessageSent';
 
-export class NodeOrchestrator extends EventEmitter {
+export class NodeOrchestrator extends EventCollector {
 	private connections: Set<PublicKey> = new Set();
 	private federatedVote: FederatedVote;
 	private processedVotes: Set<Vote> = new Set();
@@ -45,25 +47,37 @@ export class NodeOrchestrator extends EventEmitter {
 	}
 
 	receiveMessage(message: Message): void {
-		const newVoteOrNull = this.federatedVote.processVote(message.vote);
-		console.log(newVoteOrNull);
-		if (newVoteOrNull) this.broadcast(newVoteOrNull);
+		this.federatedVote.processVote(message.vote);
+		const federatedVoteEvents = this.federatedVote.drainEvents();
+		this.registerEvents(federatedVoteEvents);
+
+		federatedVoteEvents
+			.filter((event) => event instanceof Voted)
+			.forEach((event) => {
+				this.broadcast((event as Voted).vote);
+			});
 
 		this.broadcast(message.vote); //pass on the message
 	}
 
 	vote(statement: Statement): void {
-		const voteOrNull = this.federatedVote.voteForStatement(statement);
-		if (voteOrNull) {
-			this.broadcast(voteOrNull);
-		}
+		this.federatedVote.voteForStatement(statement);
+		const federatedVoteEvents = this.federatedVote.drainEvents();
+		this.registerEvents(federatedVoteEvents);
+
+		federatedVoteEvents
+			.filter((event) => event instanceof Voted)
+			.forEach((event) => {
+				this.broadcast((event as Voted).vote);
+			});
 	}
 
 	private broadcast(vote: Vote): void {
 		if (this.processedVotes.has(vote)) return;
 		this.connections.forEach((connection) => {
-			console.log(`${this.publicKey}] send ${vote} to ${connection}`);
-			this.emit('send-message', new Message(this.publicKey, connection, vote));
+			this.registerEvent(
+				new MessageSent(new Message(this.publicKey, connection, vote))
+			);
 		});
 		this.processedVotes.add(vote);
 	}
