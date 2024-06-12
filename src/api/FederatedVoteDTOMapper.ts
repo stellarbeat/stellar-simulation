@@ -1,4 +1,4 @@
-import { FederatedVote } from '../node/federated-voting/FederatedVote';
+import { FederatedVote } from '../federated-voting/FederatedVote';
 import { AgreementAttemptDTOMapper } from './AgreementAttemptDTOMapper';
 import { FederatedVoteDTO } from './FederatedVoteDTO';
 import { StatementDTOMapper } from './StatementDTOMapper';

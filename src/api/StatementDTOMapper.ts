@@ -1,4 +1,4 @@
-import { Statement } from '../node/Statement';
+import { Statement } from '../federated-voting/Statement';
 import { StatementDTO } from './StatementDTO';
 
 export class StatementDTOMapper {

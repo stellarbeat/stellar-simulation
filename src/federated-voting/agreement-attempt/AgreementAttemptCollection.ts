@@ -1,5 +1,5 @@
 import { Node } from '../Node';
-import { Statement } from '../../Statement';
+import { Statement } from '../Statement';
 import { AgreementAttempt } from './AgreementAttempt';
 
 export class AgreementAttemptCollection {

@@ -5,6 +5,10 @@ import { Simulation } from './Simulation';
 import { VoteCommand } from './command/AddVoteCommand';
 import { SimulationStep } from './SimulationStep';
 import { AddNodeCommand } from './command/AddNodeCommand';
+import { AddConnectionCommand } from './command/AddConnectionCommand';
+import { Event } from '../core/Event';
+import { ProtocolEvent } from '../federated-voting/ProtocolEvent';
+import { MessageSent } from '../node/event/MessageSent';
 
 export class SimulationPlayer {
 	private executedSteps: SimulationStep[] = [];
@@ -18,29 +22,28 @@ export class SimulationPlayer {
 		this.executedSteps = [];
 		const quorumSet: BaseQuorumSet = {
 			threshold: 2,
-			validators: ['A', 'B', 'C'],
+			validators: ['Alice', 'Bob', 'Chad'],
 			innerQuorumSets: []
 		};
 
-		this.addNode('A', quorumSet, ['B']);
-		this.addNode('B', quorumSet, ['A', 'C']);
-		this.addNode('C', quorumSet, ['B']);
+		this.addNode('Alice', quorumSet);
+		this.addNode('Bob', quorumSet);
+		this.addNode('Chad', quorumSet);
+		this.addConnection('Alice', 'Bob');
+		this.addConnection('Bob', 'Chad');
 		this.executeCurrentStep();
-
 		//@todo: validation of the network connections => only known nodes or ignore?
 	}
 
-	addNode(
-		publicKey: PublicKey,
-		quorumSet: BaseQuorumSet,
-		connections: PublicKey[]
-	): void {
-		const addNodeCommand = new AddNodeCommand(
-			publicKey,
-			quorumSet,
-			connections
-		);
+	addNode(publicKey: PublicKey, quorumSet: BaseQuorumSet): void {
+		const addNodeCommand = new AddNodeCommand(publicKey, quorumSet);
 		this.currentSimulationStep.addCommand(addNodeCommand);
+	}
+
+	addConnection(nodeA: PublicKey, nodeB: PublicKey): void {
+		this.currentSimulationStep.addCommand(
+			new AddConnectionCommand(nodeA, nodeB)
+		);
 	}
 
 	public vote(publicKey: PublicKey, statement: Statement): void {
@@ -52,9 +55,9 @@ export class SimulationPlayer {
 	next(): void {
 		if (this.currentSimulationStep.id === 1) {
 			//todo: replace with scenario instead of hard code
-			this.vote('A', 'pizza');
-			this.vote('B', 'pizza');
-			this.vote('C', 'burger');
+			this.vote('Alice', 'pizza');
+			this.vote('Bob', 'pizza');
+			this.vote('Chad', 'burger');
 		}
 
 		this.executeCurrentStepAndSendMessage();
@@ -74,10 +77,26 @@ export class SimulationPlayer {
 			return;
 		}
 
-		//allow to capture new messages for the next step
+		//allow to capture new messages for the next step, because we want to first execute the commands and then deliver the queued messages
 		this.simulation.moveMessagesToOutbox();
 		this.executeCurrentStep();
-		this.simulation.deliverMessagesInOutbox();
+
+		//log last executed events
+		this.logEvents(
+			this.executedSteps[this.executedSteps.length - 1].getEvents()
+		);
+	}
+
+	logEvents(events: Event[]): void {
+		events.forEach((event) => {
+			if (event instanceof ProtocolEvent) {
+				console.log(`[fed-vot]${event.toString()}`);
+			}
+
+			if (event instanceof MessageSent) {
+				console.log(`[overlay]${event.toString()}`);
+			}
+		});
 	}
 
 	private executeCurrentStep(): void {

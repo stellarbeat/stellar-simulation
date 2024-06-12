@@ -3,46 +3,40 @@ import { PublicKey, Statement } from '..';
 import { NodeDTO } from '../api/NodeDTO';
 import { NodeDTOMapper } from '../api/NodeDTOMapper';
 import { BaseQuorumSet } from '../node/BaseQuorumSet';
-import { Message } from '../node/Message';
 import { NodeOrchestrator } from '../node/NodeOrchestrator';
 import { MessageSent } from '../node/event/MessageSent';
-import { ProtocolEvent } from '../node/ProtocolEvent';
+import { Message } from '../node/Message';
+import { Overlay } from '../overlay/Overlay';
+import { EventCollector } from '../core/EventCollector';
 
 //todo: is this the correct name?
-export class Simulation {
-	private nodeMap: Map<PublicKey, NodeOrchestrator> = new Map();
+export class Simulation extends EventCollector {
+	private overlay: Overlay = new Overlay();
 	private messageQueue: Set<Message> = new Set();
 	private outbox: Set<Message> = new Set();
 
-	addNode(
-		publicKey: PublicKey,
-		quorumSet: BaseQuorumSet,
-		connections: PublicKey[]
-	): void {
-		if (this.nodeMap.has(publicKey)) {
-			console.log('Node already exists');
-			return;
-		}
-		const node = new NodeOrchestrator(publicKey, quorumSet, connections);
-		this.nodeMap.set(publicKey, node);
+	addNode(publicKey: PublicKey, quorumSet: BaseQuorumSet): void {
+		this.overlay.addNode(publicKey, quorumSet);
+		this.registerEvents(this.overlay.drainEvents());
+	}
+
+	addConnection(nodeA: PublicKey, nodeB: PublicKey): void {
+		this.overlay.addConnection(nodeA, nodeB);
+		this.registerEvents(this.overlay.drainEvents());
 	}
 
 	vote(publicKey: PublicKey, statement: Statement): void {
-		const node = this.nodeMap.get(publicKey);
+		const node = this.overlay.getNode(publicKey);
 		if (!node) {
 			console.log('Node not found');
 			return;
 		}
 		node.vote(statement);
 		const events = node.drainEvents();
-
+		this.registerEvents(events);
 		events.forEach((event) => {
-			if (event instanceof ProtocolEvent) {
-				console.log(`[fed-vot][${node.publicKey}]${event.toString()}`);
-			}
 			if (event instanceof MessageSent) {
-				console.log(`[overlay] ${event.toString()}`);
-				this.handleMessageSentEvent(event.message);
+				this.messageQueue.add(event.message);
 			}
 		});
 	}
@@ -60,30 +54,27 @@ export class Simulation {
 		const messages = Array.from(this.outbox);
 		this.outbox.clear();
 		messages.forEach((message) => {
-			const node = this.nodeMap.get(message.receiver);
+			const node = this.overlay.getNode(message.receiver);
 			assert(node instanceof NodeOrchestrator);
 
-			console.log(`[simulation] Deliver message: ${message}`);
+			console.log(`[overlay] Delivering message: ${message.toString()}`);
 			node.receiveMessage(message);
 			const events = node.drainEvents();
+			this.registerEvents(events);
 			events.forEach((event) => {
-				if (event instanceof ProtocolEvent) {
-					console.log(`[fed-vot][${node.publicKey}]${event.toString()}`);
-				}
 				if (event instanceof MessageSent) {
-					console.log(`[overlay] ${event.toString()}`);
-					this.handleMessageSentEvent(event.message);
+					this.messageQueue.add(event.message);
 				}
 			});
 		});
 	}
 
 	get nodes(): PublicKey[] {
-		return Array.from(this.nodeMap.keys());
+		return Array.from(this.overlay.getNodes().map((node) => node.publicKey));
 	}
 
 	getNodeInfo(publicKey: PublicKey, includeQSet = false): NodeDTO | null {
-		const node = this.nodeMap.get(publicKey);
+		const node = this.overlay.getNode(publicKey);
 		if (!node) {
 			return null;
 		}
@@ -94,8 +85,8 @@ export class Simulation {
 		publicKey: PublicKey;
 		quorumSet: BaseQuorumSet;
 	}[] {
-		return Array.from(this.nodeMap.entries()).map(([publicKey, node]) => ({
-			publicKey,
+		return this.overlay.getNodes().map((node) => ({
+			publicKey: node.publicKey,
 			quorumSet: node.getQuorumSet()
 		}));
 	}
@@ -104,16 +95,9 @@ export class Simulation {
 		publicKey: PublicKey;
 		connections: PublicKey[];
 	}[] {
-		return Array.from(this.nodeMap.entries()).map(([publicKey, node]) => ({
-			publicKey,
+		return this.overlay.getNodes().map((node) => ({
+			publicKey: node.publicKey,
 			connections: node.getConnections()
 		}));
-	}
-
-	private handleMessageSentEvent(message: Message): void {
-		console.log(
-			`[simulation] Queued message from ${message.sender} to ${message.receiver}`
-		);
-		this.messageQueue.add(message);
 	}
 }

@@ -1,11 +1,11 @@
 import { describe, it } from 'node:test';
-import { FederatedVote } from '../../../src/node/federated-voting/FederatedVote';
+import { FederatedVote } from '../../../src/federated-voting/FederatedVote';
 import assert from 'node:assert';
-import { Vote } from '../../../src/node/federated-voting/Vote';
+import { Vote } from '../../../src/federated-voting/Vote';
 import { BaseQuorumSet } from '../../../src/node/BaseQuorumSet';
-import { Voted } from '../../../src/node/federated-voting/event/Voted';
-import { AddedVoteToAgreementattempt } from '../../../src/node/federated-voting/agreement-attempt/event/AddedVoteToAgreementAttempt';
-import { AgreementAttemptCreated } from '../../../src/node/federated-voting/event/AgreementAttemptCreated';
+import { Voted } from '../../../src/federated-voting/event/Voted';
+import { AddedVoteToAgreementattempt } from '../../../src/federated-voting/agreement-attempt/event/AddedVoteToAgreementAttempt';
+import { AgreementAttemptCreated } from '../../../src/federated-voting/event/AgreementAttemptCreated';
 
 describe('FederatedVote', () => {
 	describe('voteForStatement', () => {

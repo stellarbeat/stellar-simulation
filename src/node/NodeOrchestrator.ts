@@ -1,10 +1,10 @@
 import { PublicKey, Statement } from '..';
-import { FederatedVote } from './federated-voting/FederatedVote';
+import { EventCollector } from '../core/EventCollector';
+import { FederatedVote } from '../federated-voting/FederatedVote';
+import { Vote } from '../federated-voting/Vote';
+import { Voted } from '../federated-voting/event/Voted';
 import { BaseQuorumSet } from './BaseQuorumSet';
-import { Vote } from './federated-voting/Vote';
 import { Message } from './Message';
-import { EventCollector } from '../core/domain/EventCollector';
-import { Voted } from './federated-voting/event/Voted';
 import { MessageSent } from './event/MessageSent';
 
 export class NodeOrchestrator extends EventCollector {

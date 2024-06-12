@@ -1,5 +1,5 @@
-import { PublicKey, Statement } from '../../../..';
-import { ProtocolEvent } from '../../../ProtocolEvent';
+import { PublicKey, Statement } from '../../..';
+import { ProtocolEvent } from '../../ProtocolEvent';
 import { AgreementAttemptPhase } from '../AgreementAttempt';
 
 export class MovedToAcceptPhaseEvent extends ProtocolEvent {
@@ -13,9 +13,9 @@ export class MovedToAcceptPhaseEvent extends ProtocolEvent {
 	}
 
 	toString(): string {
-		return `[${this.subType}] agreement attempt of node ${
-			this.publicKey
-		} on ${this.statement.toString()} moved to phase ${
+		return `[${this.publicKey}][${
+			this.subType
+		}] Attempt on ${this.statement.toString()} moved to phase ${
 			this.agreementAttemptPhase
 		}`;
 	}

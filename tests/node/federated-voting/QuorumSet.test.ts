@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
-import { QuorumSet } from '../../../src/node/federated-voting/QuorumSet';
+import { QuorumSet } from '../../../src/federated-voting/QuorumSet';
 
 describe('QuorumSet', () => {
 	describe('isSetVBlocking for validators arrays', () => {

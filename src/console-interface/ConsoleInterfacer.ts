@@ -128,9 +128,6 @@ export class ConsoleInterfacer {
 		this.showNodeConnections();
 		console.log('The node trust connections are:');
 		this.showNodeTrustConnections();
-		console.log(
-			'Added commands: \n' + this.simulationPlayer.getNextCommandsInfo()
-		);
 
 		console.log("\n-- Enter 'next' to start federated consensus -- \n");
 	}

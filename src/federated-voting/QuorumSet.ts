@@ -1,5 +1,5 @@
-import { PublicKey } from '../..';
-import { BaseQuorumSet } from '../BaseQuorumSet';
+import { PublicKey } from '..';
+import { BaseQuorumSet } from '../node/BaseQuorumSet';
 
 export class QuorumSet {
 	constructor(

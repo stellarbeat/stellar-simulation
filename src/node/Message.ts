@@ -1,5 +1,5 @@
 import { PublicKey } from '..';
-import { Vote } from './federated-voting/Vote';
+import { Vote } from '../federated-voting/Vote';
 
 export class Message {
 	constructor(
@@ -9,6 +9,6 @@ export class Message {
 	) {}
 
 	toString(): string {
-		return `From: ${this.sender.toString()}, To: ${this.receiver.toString()}, Vote: ${this.vote.toString()}`;
+		return `From: ${this.sender.toString()}, To: ${this.receiver.toString()}, ${this.vote.toString()}`;
 	}
 }

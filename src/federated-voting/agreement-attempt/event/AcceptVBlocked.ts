@@ -1,5 +1,5 @@
-import { PublicKey, Statement } from '../../../..';
-import { ProtocolEvent } from '../../../ProtocolEvent';
+import { PublicKey, Statement } from '../../..';
+import { ProtocolEvent } from '../../ProtocolEvent';
 import { AgreementAttemptPhase } from '../AgreementAttempt';
 
 export class AcceptVBlocked extends ProtocolEvent {
@@ -14,6 +14,6 @@ export class AcceptVBlocked extends ProtocolEvent {
 	}
 
 	toString(): string {
-		return `[${this.subType}] accept(${this.statement}) votes from ${this.vBlockingSet} are v-blocking in agreement attempt of node ${this.publicKey} currently in phase ${this.agreementAttemptPhase}`;
+		return `[${this.publicKey}][${this.subType}] Accept(${this.statement}) votes from ${this.vBlockingSet} are v-blocking in agreement attempt currently in phase ${this.agreementAttemptPhase}`;
 	}
 }

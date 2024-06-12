@@ -1,4 +1,4 @@
-import { Event } from '../../core/domain/Event';
+import { Event } from '../../core/Event';
 import { Message } from '../Message';
 
 export class MessageSent implements Event {

@@ -1,6 +1,6 @@
-import { PublicKey } from '../../../..';
-import { ProtocolEvent } from '../../../ProtocolEvent';
-import { Statement } from '../../../Statement';
+import { PublicKey } from '../../..';
+import { ProtocolEvent } from '../../ProtocolEvent';
+import { Statement } from '../../Statement';
 import { Vote } from '../../Vote';
 import { AgreementAttemptPhase } from '../AgreementAttempt';
 
@@ -17,9 +17,9 @@ export class AddedVoteToAgreementattempt extends ProtocolEvent {
 	}
 
 	toString(): string {
-		return `[${
+		return `[${this.publicKey}][${
 			this.subType
-		}] Add ${this.vote.toString()} to agreement attempt on ${this.statement.toString()} of node ${this.publicKey.toString()} currently in phase: ${
+		}] Added ${this.vote.toString()} to agreement attempt on ${this.statement.toString()} in phase: ${
 			this.currentPhase
 		}`;
 	}

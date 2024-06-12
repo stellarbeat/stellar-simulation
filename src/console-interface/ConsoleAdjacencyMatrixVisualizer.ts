@@ -38,15 +38,18 @@ export class ConsoleAdjacencyMatrixVisualization {
 	}
 
 	private printMatrix(nodeIds: string[], matrix: string[][]): void {
-		const header = '     ' + nodeIds.map((id) => id.padEnd(3)).join(' ');
+		const maxLength = Math.max(...nodeIds.map((id) => id.length));
+		const header =
+			' '.padEnd(maxLength + 1) +
+			nodeIds.map((id) => id.padEnd(maxLength)).join(' ');
 		console.log(header);
-		console.log('   ' + '-'.repeat(header.length - 3));
+		console.log(' '.padEnd(maxLength + 1) + '-'.repeat(header.length - 3));
 
 		matrix.forEach((row, index) => {
 			const rowString =
-				nodeIds[index].padEnd(3) +
+				nodeIds[index].padEnd(maxLength) +
 				'| ' +
-				row.map((cell) => cell.toString().padEnd(3)).join(' ');
+				row.map((cell) => cell.toString().padEnd(maxLength)).join(' ');
 			console.log(rowString);
 		});
 	}

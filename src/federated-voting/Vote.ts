@@ -1,6 +1,6 @@
-import { PublicKey } from '../..';
-import { Statement } from '../Statement';
-import { BaseQuorumSet } from '../BaseQuorumSet';
+import { PublicKey } from '..';
+import { Statement } from './Statement';
+import { BaseQuorumSet } from '../node/BaseQuorumSet';
 
 //contains the statement a node voted from and if it accepted a vote.
 export class Vote {

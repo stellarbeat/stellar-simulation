@@ -1,4 +1,4 @@
-import { AgreementAttempt } from '../node/federated-voting/agreement-attempt/AgreementAttempt';
+import { AgreementAttempt } from '../federated-voting/agreement-attempt/AgreementAttempt';
 import { AgreementAttemptDTO } from './AgreementAttemptDTO';
 import { StatementDTOMapper } from './StatementDTOMapper';
 

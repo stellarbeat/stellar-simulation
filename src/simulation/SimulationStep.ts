@@ -1,11 +1,14 @@
+import { EventCollector } from '../core/EventCollector';
 import { Command } from './Command';
 
 import { Simulation } from './Simulation';
 
-export class SimulationStep {
+export class SimulationStep extends EventCollector {
 	private commands: Command[] = [];
 
-	constructor(public readonly id: number) {}
+	constructor(public readonly id: number) {
+		super();
+	}
 
 	addCommand(command: Command): void {
 		console.log(
@@ -20,6 +23,9 @@ export class SimulationStep {
 			console.log(`Executing command: ${command.toString()}`);
 			command.execute(simulation);
 		});
+		simulation.deliverMessagesInOutbox();
+
+		this.registerEvents(simulation.drainEvents());
 	}
 
 	hasCommands(): boolean {

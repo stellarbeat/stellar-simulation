@@ -26,4 +26,8 @@ export class EventCollector {
 		this.events = [];
 		return events;
 	}
+
+	public getEvents(): Event[] {
+		return this.events;
+	}
 }

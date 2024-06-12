@@ -1,17 +1,15 @@
-import { Statement } from '../Statement';
+import { Statement } from './Statement';
 import { Vote } from './Vote';
 import { AgreementAttemptCollection } from './agreement-attempt/AgreementAttemptCollection';
 import { Node } from './Node';
 import { AgreementAttempt } from './agreement-attempt/AgreementAttempt';
-import { BaseQuorumSet } from '../BaseQuorumSet';
+import { BaseQuorumSet } from '../node/BaseQuorumSet';
 import { QuorumSet } from './QuorumSet';
-import { PublicKey } from '../..';
+import { PublicKey } from '..';
 import { AgreementAttemptCreated } from './event/AgreementAttemptCreated';
 import { Voted } from './event/Voted';
-import { RegisteredVote } from './event/RegisteredVote';
-import { ProcessedVote } from './event/ProcessedVote';
 import { ConsensusReached } from './event/ConsensusReached';
-import { EventCollector } from '../../core/domain/EventCollector';
+import { EventCollector } from '../core/EventCollector';
 import { AddedVoteToAgreementattempt } from './agreement-attempt/event/AddedVoteToAgreementAttempt';
 
 export class FederatedVote extends EventCollector {
@@ -38,7 +36,7 @@ export class FederatedVote extends EventCollector {
 			this.node.quorumSet.toBaseQuorumSet()
 		);
 		this._nodeHasVotedForAStatement = true;
-		this.registerEvent(new Voted(vote));
+		this.registerEvent(new Voted(this.node.publicKey, vote));
 
 		this.processVote(vote);
 	}
@@ -51,7 +49,7 @@ export class FederatedVote extends EventCollector {
 			this.node.publicKey,
 			this.node.quorumSet.toBaseQuorumSet()
 		);
-		this.registerEvent(new Voted(vote));
+		this.registerEvent(new Voted(this.node.publicKey, vote));
 		this.processVote(vote);
 	}
 
@@ -75,7 +73,9 @@ export class FederatedVote extends EventCollector {
 			this.registerEvents(agreementAttempt.drainEvents());
 
 			this.consensus = agreementAttempt.statement;
-			this.registerEvent(new ConsensusReached(agreementAttempt.statement));
+			this.registerEvent(
+				new ConsensusReached(this.node.publicKey, agreementAttempt.statement)
+			);
 		}
 
 		//this.registerEvent(new ProcessedVote(vote));
@@ -88,7 +88,9 @@ export class FederatedVote extends EventCollector {
 	private createAgreementAttempt(statement: Statement): AgreementAttempt {
 		const agreementAttempt = AgreementAttempt.create(this.node, statement);
 		this.agreementAttempts.add(agreementAttempt);
-		this.registerEvent(new AgreementAttemptCreated(agreementAttempt));
+		this.registerEvent(
+			new AgreementAttemptCreated(this.node.publicKey, statement)
+		);
 
 		return agreementAttempt;
 	}

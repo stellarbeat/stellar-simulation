@@ -4,8 +4,8 @@ import assert from 'node:assert';
 import {
 	AgreementAttempt,
 	AgreementAttemptPhase
-} from '../../../../src/node/federated-voting/agreement-attempt/AgreementAttempt';
-import { QuorumSet } from '../../../../src/node/federated-voting/QuorumSet';
+} from '../../../../src/federated-voting/agreement-attempt/AgreementAttempt';
+import { QuorumSet } from '../../../../src/federated-voting/QuorumSet';
 
 describe('AgreementAttempt', () => {
 	const setupNode = (nodeId: string) => {

@@ -1,5 +1,5 @@
 import { QuorumSet } from './QuorumSet';
-import { PublicKey } from '../..';
+import { PublicKey } from '..';
 
 /**
  * A node is a participant in an FBAS system/network.

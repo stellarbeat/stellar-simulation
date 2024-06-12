@@ -1,10 +1,10 @@
-import { Statement } from '../../Statement';
-import { Node, PublicKey } from '../../..';
+import { Statement } from '../Statement';
+import { Node, PublicKey } from '../..';
 import { QuorumSet } from '../QuorumSet';
-import { EventCollector } from '../../../core/domain/EventCollector';
+import { EventCollector } from '../../core/EventCollector';
 import { AgreementAttemptInAcceptPhase } from './event/AgreementAttemptInAcceptPhase';
-import { RatifiedVote } from './event/RatifiedVote';
-import { RatifiedAcceptVote } from './event/RatifiedAcceptVote';
+import { VoteRatified } from './event/VoteRatified';
+import { AcceptVoteRatified } from './event/AcceptVoteRatified';
 import { AcceptVBlocked } from './event/AcceptVBlocked';
 
 export enum AgreementAttemptPhase {
@@ -129,7 +129,7 @@ export class AgreementAttempt extends EventCollector {
 		const quorumOrNull = this.node.isQuorum(this.getAllVotes());
 		if (quorumOrNull !== null) {
 			this.registerEvent(
-				new RatifiedVote(this.node.publicKey, this.statement, quorumOrNull)
+				new VoteRatified(this.node.publicKey, this.statement, quorumOrNull)
 			);
 		}
 		return quorumOrNull !== null;
@@ -139,7 +139,7 @@ export class AgreementAttempt extends EventCollector {
 		const quorumOrNull = this.node.isQuorum(this.getAcceptVotes());
 		if (quorumOrNull !== null) {
 			this.registerEvent(
-				new RatifiedAcceptVote(
+				new AcceptVoteRatified(
 					this.node.publicKey,
 					this.statement,
 					quorumOrNull
