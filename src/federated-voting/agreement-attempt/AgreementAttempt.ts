@@ -2,10 +2,11 @@ import { Statement } from '../Statement';
 import { Node, PublicKey } from '../..';
 import { QuorumSet } from '../QuorumSet';
 import { EventCollector } from '../../core/EventCollector';
-import { AgreementAttemptInAcceptPhase } from './event/AgreementAttemptInAcceptPhase';
+import { AgreementAttemptMovedToAcceptPhase } from './event/AgreementAttemptMovedToAcceptPhase';
 import { VoteRatified } from './event/VoteRatified';
 import { AcceptVoteRatified } from './event/AcceptVoteRatified';
-import { AcceptVBlocked } from './event/AcceptVBlocked';
+import { AcceptVoteVBlocked } from './event/AcceptVoteVBlocked';
+import { AgreementAttemptMovedToConfirmPhase } from './event/AgreementAttemptMovedToConfirmPhase';
 
 export enum AgreementAttemptPhase {
 	unknown = 'unknown',
@@ -66,16 +67,15 @@ export class AgreementAttempt extends EventCollector {
 
 		if (this.areAcceptingNodesVBlocking()) {
 			this.registerEvent(
-				new AcceptVBlocked(
+				new AcceptVoteVBlocked(
 					this.node.publicKey,
-					this.phase,
 					this.statement,
 					new Set(Array.from(this.getAcceptVotes().keys()))
 				)
 			);
 			this.phase = AgreementAttemptPhase.accepted;
 			this.registerEvent(
-				new AgreementAttemptInAcceptPhase(
+				new AgreementAttemptMovedToAcceptPhase(
 					this.node.publicKey,
 					this.phase,
 					this.statement
@@ -87,7 +87,7 @@ export class AgreementAttempt extends EventCollector {
 		if (this.isVoteRatified()) {
 			this.phase = AgreementAttemptPhase.accepted;
 			this.registerEvent(
-				new AgreementAttemptInAcceptPhase(
+				new AgreementAttemptMovedToAcceptPhase(
 					this.node.publicKey,
 					this.phase,
 					this.statement
@@ -107,7 +107,7 @@ export class AgreementAttempt extends EventCollector {
 		if (this.isAcceptVoteRatified()) {
 			this.phase = AgreementAttemptPhase.confirmed;
 			this.registerEvent(
-				new AgreementAttemptInAcceptPhase(
+				new AgreementAttemptMovedToConfirmPhase(
 					this.node.publicKey,
 					this.phase,
 					this.statement

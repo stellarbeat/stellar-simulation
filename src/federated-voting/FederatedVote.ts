@@ -1,6 +1,5 @@
 import { Statement } from './Statement';
 import { Vote } from './Vote';
-import { AgreementAttemptCollection } from './agreement-attempt/AgreementAttemptCollection';
 import { Node } from './Node';
 import { AgreementAttempt } from './agreement-attempt/AgreementAttempt';
 import { BaseQuorumSet } from '../node/BaseQuorumSet';
@@ -10,11 +9,10 @@ import { AgreementAttemptCreated } from './event/AgreementAttemptCreated';
 import { Voted } from './event/Voted';
 import { ConsensusReached } from './event/ConsensusReached';
 import { EventCollector } from '../core/EventCollector';
-import { AddedVoteToAgreementattempt } from './agreement-attempt/event/AddedVoteToAgreementAttempt';
+import { AddedVoteToAgreementAttempt } from './agreement-attempt/event/AddedVoteToAgreementAttempt';
 
 export class FederatedVote extends EventCollector {
-	private agreementAttempts: AgreementAttemptCollection =
-		new AgreementAttemptCollection();
+	private agreementAttempts: Map<Statement, AgreementAttempt> = new Map();
 	private _nodeHasVotedForAStatement = false;
 	private consensus: Statement | null = null;
 	private node: Node;
@@ -87,7 +85,7 @@ export class FederatedVote extends EventCollector {
 
 	private createAgreementAttempt(statement: Statement): AgreementAttempt {
 		const agreementAttempt = AgreementAttempt.create(this.node, statement);
-		this.agreementAttempts.add(agreementAttempt);
+		this.agreementAttempts.set(statement, agreementAttempt);
 		this.registerEvent(
 			new AgreementAttemptCreated(this.node.publicKey, statement)
 		);
@@ -109,7 +107,7 @@ export class FederatedVote extends EventCollector {
 	}
 
 	getAgreementAttempts(): AgreementAttempt[] {
-		return this.agreementAttempts.getAll();
+		return Array.from(this.agreementAttempts.values());
 	}
 
 	updateQuorumSet(quorumSet: BaseQuorumSet): void {
@@ -137,7 +135,7 @@ export class FederatedVote extends EventCollector {
 
 		//todo: move to AgreementAttempt
 		this.registerEvent(
-			new AddedVoteToAgreementattempt(
+			new AddedVoteToAgreementAttempt(
 				agreementAttempt.node.publicKey,
 				agreementAttempt.statement,
 				vote,

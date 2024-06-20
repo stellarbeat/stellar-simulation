@@ -1,10 +1,11 @@
-import { PublicKey, Statement } from '../../..';
+import { PublicKey } from '../../..';
 import { ProtocolEvent } from '../../ProtocolEvent';
+import { Statement } from '../../Statement';
+import { AgreementAttemptPhase } from '../AgreementAttempt';
 
-import { AgreementAttempt, AgreementAttemptPhase } from '../AgreementAttempt';
+export class AgreementAttemptMovedToConfirmPhase extends ProtocolEvent {
+	readonly subType = 'AgreementAttemptMovedToConfimPhase';
 
-export class AgreementAttemptInAcceptPhase extends ProtocolEvent {
-	readonly subType = 'AgreementAttemptInAcceptPhase';
 	constructor(
 		public readonly publicKey: PublicKey,
 		public readonly agreementAttemptPhase: AgreementAttemptPhase,

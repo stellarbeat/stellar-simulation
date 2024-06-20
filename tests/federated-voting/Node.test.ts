@@ -1,6 +1,6 @@
 import { beforeEach, describe, it } from 'node:test';
-import { Node } from '../../../src';
-import { QuorumSet } from '../../../src/federated-voting/QuorumSet';
+import { Node } from '../../src';
+import { QuorumSet } from '../../src/federated-voting/QuorumSet';
 import assert from 'node:assert';
 
 describe('Node', () => {

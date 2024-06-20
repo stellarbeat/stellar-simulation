@@ -4,7 +4,7 @@ import { Statement } from '../../Statement';
 import { Vote } from '../../Vote';
 import { AgreementAttemptPhase } from '../AgreementAttempt';
 
-export class AddedVoteToAgreementattempt extends ProtocolEvent {
+export class AddedVoteToAgreementAttempt extends ProtocolEvent {
 	readonly subType = 'AddedVoteToAgreementattempt';
 
 	constructor(

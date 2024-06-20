@@ -1,11 +1,11 @@
 import { describe, it } from 'node:test';
-import { FederatedVote } from '../../../src/federated-voting/FederatedVote';
+import { FederatedVote } from '../../src/federated-voting/FederatedVote';
 import assert from 'node:assert';
-import { Vote } from '../../../src/federated-voting/Vote';
-import { BaseQuorumSet } from '../../../src/node/BaseQuorumSet';
-import { Voted } from '../../../src/federated-voting/event/Voted';
-import { AddedVoteToAgreementattempt } from '../../../src/federated-voting/agreement-attempt/event/AddedVoteToAgreementAttempt';
-import { AgreementAttemptCreated } from '../../../src/federated-voting/event/AgreementAttemptCreated';
+import { Vote } from '../../src/federated-voting/Vote';
+import { BaseQuorumSet } from '../../src/node/BaseQuorumSet';
+import { Voted } from '../../src/federated-voting/event/Voted';
+import { AgreementAttemptCreated } from '../../src/federated-voting/event/AgreementAttemptCreated';
+import { AddedVoteToAgreementAttempt } from '../../src/federated-voting';
 
 describe('FederatedVote', () => {
 	describe('voteForStatement', () => {
@@ -53,7 +53,7 @@ describe('FederatedVote', () => {
 
 			const voteAddedToAgreementAttemptEvent = events[2];
 			assert.ok(
-				voteAddedToAgreementAttemptEvent instanceof AddedVoteToAgreementattempt
+				voteAddedToAgreementAttemptEvent instanceof AddedVoteToAgreementAttempt
 			);
 			assert.strictEqual(voteAddedToAgreementAttemptEvent.statement, statement);
 
